@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: crabs
+      POSTGRES_USER: crab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crab -d crabs"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://crab:${POSTGRES_PASSWORD:-local-development-only}@db/crabs
+      DATA_DIR: /app/data
+      ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - uploads:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/ready')"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+  cleanup:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://crab:${POSTGRES_PASSWORD:-local-development-only}@db/crabs
+      DATA_DIR: /app/data
+    volumes:
+      - uploads:/app/data
+    command: ["sh", "-c", "while true; do python -m backend.cleanup; sleep 3600; done"]
+    depends_on:
+      api:
+        condition: service_healthy
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+volumes:
+  postgres:
+  uploads:

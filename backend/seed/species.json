@@ -1,0 +1,352 @@
+[
+  {
+    "id": "scylla-serrata",
+    "scientific_name": "Scylla serrata",
+    "accepted_taxon_id": null,
+    "taxonomic_rank": "species",
+    "synonyms": [],
+    "english_name": "Giant mud crab",
+    "names": [
+      {
+        "name": "Giant mud crab",
+        "language": "en",
+        "region": "unspecified",
+        "scope": "species",
+        "status": "provisional"
+      }
+    ],
+    "diagnostic_traits": [
+      "Pointed frontal spines and prominent claw spines are described in the reference.",
+      "Polygonal markings on claws and legs may be visible; do not identify from color alone."
+    ],
+    "habitat": "Mangrove estuaries and intertidal muddy habitats.",
+    "distribution": "Philippines; detailed regional distribution awaits review.",
+    "size_range": null,
+    "coloration": null,
+    "life_stage_notes": "Juveniles, sex differences, partial views, and missing diagnostic structures can prevent reliable identification from one photograph.",
+    "lookalikes": [
+      "Scylla serrata",
+      "Scylla olivacea",
+      "Scylla tranquebarica",
+      "Scylla paramamosain"
+    ],
+    "edibility": "unknown",
+    "toxicity": "unknown",
+    "venom_status": "unknown",
+    "safety_warning": "Do not consume, handle, buy, or harvest a crab based solely on this identification. A photograph cannot establish food safety. Consult a qualified local expert and current local advisories.",
+    "safety_evidence": [],
+    "conservation_status": "not_reviewed",
+    "regulatory_notes": "Current national and local restrictions require review; absence of a note is not permission to harvest.",
+    "common_uses": "Not yet reviewed.",
+    "identification_status": "provisional",
+    "review_status": "pending",
+    "reviewed_by": null,
+    "last_reviewed": null,
+    "revision": "seed-2026-10-18",
+    "sources": [
+      {
+        "id": "seafdec-2025",
+        "title": "SEAFDEC/AQD: Identification of mangrove crabs (2025)",
+        "url": "https://repository.seafdec.org.ph/bitstream/handle/10862/6607/CaballeroPA2025-AEM77.pdf?isAllowed=y&sequence=3"
+      }
+    ],
+    "claim_sources": {
+      "diagnostic_traits": [
+        "seafdec-2025"
+      ],
+      "toxicity": []
+    }
+  },
+  {
+    "id": "scylla-olivacea",
+    "scientific_name": "Scylla olivacea",
+    "accepted_taxon_id": null,
+    "taxonomic_rank": "species",
+    "synonyms": [],
+    "english_name": "Orange mud crab",
+    "names": [
+      {
+        "name": "Orange mud crab",
+        "language": "en",
+        "region": "unspecified",
+        "scope": "species",
+        "status": "provisional"
+      }
+    ],
+    "diagnostic_traits": [
+      "Compare frontal and claw spine morphology using an expert-reviewed key.",
+      "Color alone is not sufficient for identification."
+    ],
+    "habitat": "Mangrove estuaries and soft-bottom coastal habitats.",
+    "distribution": "Philippines; detailed regional distribution awaits review.",
+    "size_range": null,
+    "coloration": null,
+    "life_stage_notes": "Juveniles, sex differences, partial views, and missing diagnostic structures can prevent reliable identification from one photograph.",
+    "lookalikes": [
+      "Scylla serrata",
+      "Scylla olivacea",
+      "Scylla tranquebarica",
+      "Scylla paramamosain"
+    ],
+    "edibility": "unknown",
+    "toxicity": "unknown",
+    "venom_status": "unknown",
+    "safety_warning": "Do not consume, handle, buy, or harvest a crab based solely on this identification. A photograph cannot establish food safety. Consult a qualified local expert and current local advisories.",
+    "safety_evidence": [],
+    "conservation_status": "not_reviewed",
+    "regulatory_notes": "Current national and local restrictions require review; absence of a note is not permission to harvest.",
+    "common_uses": "Not yet reviewed.",
+    "identification_status": "provisional",
+    "review_status": "pending",
+    "reviewed_by": null,
+    "last_reviewed": null,
+    "revision": "seed-2026-10-18",
+    "sources": [
+      {
+        "id": "seafdec-2025",
+        "title": "SEAFDEC/AQD: Identification of mangrove crabs (2025)",
+        "url": "https://repository.seafdec.org.ph/bitstream/handle/10862/6607/CaballeroPA2025-AEM77.pdf?isAllowed=y&sequence=3"
+      }
+    ],
+    "claim_sources": {
+      "diagnostic_traits": [
+        "seafdec-2025"
+      ],
+      "toxicity": []
+    }
+  },
+  {
+    "id": "scylla-tranquebarica",
+    "scientific_name": "Scylla tranquebarica",
+    "accepted_taxon_id": null,
+    "taxonomic_rank": "species",
+    "synonyms": [],
+    "english_name": "Purple mud crab",
+    "names": [
+      {
+        "name": "Purple mud crab",
+        "language": "en",
+        "region": "unspecified",
+        "scope": "species",
+        "status": "provisional"
+      }
+    ],
+    "diagnostic_traits": [
+      "Compare frontal and claw spine morphology using an expert-reviewed key.",
+      "A clear dorsal photograph may still be insufficient to distinguish Scylla species."
+    ],
+    "habitat": "Mangrove estuaries and soft-bottom coastal habitats.",
+    "distribution": "Philippines; detailed regional distribution awaits review.",
+    "size_range": null,
+    "coloration": null,
+    "life_stage_notes": "Juveniles, sex differences, partial views, and missing diagnostic structures can prevent reliable identification from one photograph.",
+    "lookalikes": [
+      "Scylla serrata",
+      "Scylla olivacea",
+      "Scylla tranquebarica",
+      "Scylla paramamosain"
+    ],
+    "edibility": "unknown",
+    "toxicity": "unknown",
+    "venom_status": "unknown",
+    "safety_warning": "Do not consume, handle, buy, or harvest a crab based solely on this identification. A photograph cannot establish food safety. Consult a qualified local expert and current local advisories.",
+    "safety_evidence": [],
+    "conservation_status": "not_reviewed",
+    "regulatory_notes": "Current national and local restrictions require review; absence of a note is not permission to harvest.",
+    "common_uses": "Not yet reviewed.",
+    "identification_status": "provisional",
+    "review_status": "pending",
+    "reviewed_by": null,
+    "last_reviewed": null,
+    "revision": "seed-2026-10-18",
+    "sources": [
+      {
+        "id": "seafdec-2025",
+        "title": "SEAFDEC/AQD: Identification of mangrove crabs (2025)",
+        "url": "https://repository.seafdec.org.ph/bitstream/handle/10862/6607/CaballeroPA2025-AEM77.pdf?isAllowed=y&sequence=3"
+      }
+    ],
+    "claim_sources": {
+      "diagnostic_traits": [
+        "seafdec-2025"
+      ],
+      "toxicity": []
+    }
+  },
+  {
+    "id": "portunus-pelagicus",
+    "scientific_name": "Portunus pelagicus",
+    "accepted_taxon_id": null,
+    "taxonomic_rank": "species",
+    "synonyms": [],
+    "english_name": "Blue swimming crab",
+    "names": [
+      {
+        "name": "Blue swimming crab",
+        "language": "en",
+        "region": "unspecified",
+        "scope": "species",
+        "status": "provisional"
+      }
+    ],
+    "diagnostic_traits": [
+      "Diagnostic key awaiting expert review; do not use this placeholder as an identification key."
+    ],
+    "habitat": "Habitat description awaiting expert review.",
+    "distribution": "Philippine distribution and taxon concept awaiting review.",
+    "size_range": null,
+    "coloration": null,
+    "life_stage_notes": "Juveniles, sex differences, partial views, and missing diagnostic structures can prevent reliable identification from one photograph.",
+    "lookalikes": [],
+    "edibility": "unknown",
+    "toxicity": "unknown",
+    "venom_status": "unknown",
+    "safety_warning": "Do not consume, handle, buy, or harvest a crab based solely on this identification. A photograph cannot establish food safety. Consult a qualified local expert and current local advisories.",
+    "safety_evidence": [],
+    "conservation_status": "not_reviewed",
+    "regulatory_notes": "Current national and local restrictions require review; absence of a note is not permission to harvest.",
+    "common_uses": "Not yet reviewed.",
+    "identification_status": "provisional",
+    "review_status": "pending",
+    "reviewed_by": null,
+    "last_reviewed": null,
+    "revision": "seed-2026-10-18",
+    "sources": [
+      {
+        "id": "worms",
+        "title": "WoRMS: World Register of Marine Species; accepted taxon resolution pending",
+        "url": "https://www.marinespecies.org/"
+      }
+    ],
+    "claim_sources": {
+      "diagnostic_traits": [
+        "worms"
+      ],
+      "toxicity": []
+    }
+  },
+  {
+    "id": "zosimus-aeneus",
+    "scientific_name": "Zosimus aeneus",
+    "accepted_taxon_id": null,
+    "taxonomic_rank": "species",
+    "synonyms": [],
+    "english_name": "Devil crab",
+    "names": [
+      {
+        "name": "Devil crab",
+        "language": "en",
+        "region": "unspecified",
+        "scope": "species",
+        "status": "provisional"
+      }
+    ],
+    "diagnostic_traits": [
+      "BFAR identifies this taxon in its poisonous-crab advisory.",
+      "Diagnostic key awaiting expert review."
+    ],
+    "habitat": "Habitat description awaiting expert review.",
+    "distribution": "Philippines; detailed regional distribution awaits review.",
+    "size_range": null,
+    "coloration": null,
+    "life_stage_notes": "Juveniles, sex differences, partial views, and missing diagnostic structures can prevent reliable identification from one photograph.",
+    "lookalikes": [],
+    "edibility": "not_recommended",
+    "toxicity": "toxic",
+    "venom_status": "unknown",
+    "safety_warning": "Do not consume, handle, buy, or harvest a crab based solely on this identification. A photograph cannot establish food safety. Consult a qualified local expert and current local advisories.",
+    "safety_evidence": [
+      {
+        "region": "Bicol, Philippines",
+        "source_id": "bfar-bicol-2023",
+        "claim": "BFAR poisonous-crab advisory names this species.",
+        "review_status": "provisional"
+      }
+    ],
+    "conservation_status": "not_reviewed",
+    "regulatory_notes": "Current national and local restrictions require review; absence of a note is not permission to harvest.",
+    "common_uses": "Not yet reviewed.",
+    "identification_status": "provisional",
+    "review_status": "pending",
+    "reviewed_by": null,
+    "last_reviewed": null,
+    "revision": "seed-2026-10-18",
+    "sources": [
+      {
+        "id": "bfar-bicol-2023",
+        "title": "BFAR-5: Hazards of poisonous crabs (2023)",
+        "url": "https://region5.bfar.da.gov.ph/2023/07/31/bfar-5-raises-awareness-regarding-the-hazards-of-poisonous-crab/"
+      }
+    ],
+    "claim_sources": {
+      "diagnostic_traits": [
+        "bfar-bicol-2023"
+      ],
+      "toxicity": [
+        "bfar-bicol-2023"
+      ]
+    }
+  },
+  {
+    "id": "atergatis-floridus",
+    "scientific_name": "Atergatis floridus",
+    "accepted_taxon_id": null,
+    "taxonomic_rank": "species",
+    "synonyms": [],
+    "english_name": "Floral egg crab",
+    "names": [
+      {
+        "name": "Floral egg crab",
+        "language": "en",
+        "region": "unspecified",
+        "scope": "species",
+        "status": "provisional"
+      }
+    ],
+    "diagnostic_traits": [
+      "BFAR identifies this taxon in its poisonous-crab advisory.",
+      "Diagnostic key awaiting expert review."
+    ],
+    "habitat": "Habitat description awaiting expert review.",
+    "distribution": "Philippines; detailed regional distribution awaits review.",
+    "size_range": null,
+    "coloration": null,
+    "life_stage_notes": "Juveniles, sex differences, partial views, and missing diagnostic structures can prevent reliable identification from one photograph.",
+    "lookalikes": [],
+    "edibility": "not_recommended",
+    "toxicity": "toxic",
+    "venom_status": "unknown",
+    "safety_warning": "Do not consume, handle, buy, or harvest a crab based solely on this identification. A photograph cannot establish food safety. Consult a qualified local expert and current local advisories.",
+    "safety_evidence": [
+      {
+        "region": "Bicol, Philippines",
+        "source_id": "bfar-bicol-2023",
+        "claim": "BFAR poisonous-crab advisory names this species.",
+        "review_status": "provisional"
+      }
+    ],
+    "conservation_status": "not_reviewed",
+    "regulatory_notes": "Current national and local restrictions require review; absence of a note is not permission to harvest.",
+    "common_uses": "Not yet reviewed.",
+    "identification_status": "provisional",
+    "review_status": "pending",
+    "reviewed_by": null,
+    "last_reviewed": null,
+    "revision": "seed-2026-10-18",
+    "sources": [
+      {
+        "id": "bfar-bicol-2023",
+        "title": "BFAR-5: Hazards of poisonous crabs (2023)",
+        "url": "https://region5.bfar.da.gov.ph/2023/07/31/bfar-5-raises-awareness-regarding-the-hazards-of-poisonous-crab/"
+      }
+    ],
+    "claim_sources": {
+      "diagnostic_traits": [
+        "bfar-bicol-2023"
+      ],
+      "toxicity": [
+        "bfar-bicol-2023"
+      ]
+    }
+  }
+]
