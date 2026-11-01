@@ -60,9 +60,22 @@ Images become inaccessible after 24 hours; prediction history expires after 30 d
 1. Obtain licensed, expert-reviewed photographs and create a provenance JSONL manifest as described in [the production plan](docs/production-plan.md).
 2. `python -m ml.split curated.jsonl split.jsonl` creates grouped splits. Freeze and audit these assignments; ensure all classes occur in train/validation/calibration/test.
 3. Install optional training dependencies: `pip install -e ".[training]"`.
-4. `python -m ml.train split.jsonl path/to/images models/candidate --epochs 10` trains an EfficientNet-B0 candidate, fits temperature on calibration data, and exports ONNX. This downloads ImageNet weights; review their provenance and terms.
+4. `python -m ml.train split.jsonl path/to/images models/candidate --epochs 10` trains the legacy EfficientNet-B0 classifier. For the planned detector, add expert-reviewed normalized `bbox_xywh` values to each manifest row and run `python -m ml.train_yolov8 split.jsonl path/to/images models/yolov8-candidate --epochs 50`. This downloads pretrained weights; review their provenance, terms, and Ultralytics licensing before deployment.
 5. Tune abstention on a separate policy-development set containing unknown species. Evaluate against sealed test and OOD sets, verify PyTorch/ONNX parity, and obtain expert sign-off. The candidate's placeholder rejection thresholds intentionally reject everything and `approved_for_release` is false.
 6. After completing those gates, put the approved bundle path in `MODEL_MANIFEST` and install `.[ml]`. The API validates labels, checksum, approval marker, and output shape at startup.
+
+### YOLOv8 preparation checklist
+
+Before a detector can be approved:
+
+- Annotate every crab with a bounding box in normalized `x_center, y_center, width, height` format; annotate multi-crab images separately.
+- Keep observation, photographer, exact-image, near-duplicate, geographic, and temporal groups together across splits.
+- Preserve a sealed test set and separate unknown taxa/non-crab set; do not use user uploads as training data.
+- Evaluate detection mAP/IoU as well as species top-1/top-3 accuracy after cropping detections, accepted-prediction accuracy, coverage, no-crab rejection, and false detections.
+- Tune confidence and IoU thresholds on policy-development data only. The generated manifest is deliberately unapproved.
+- Verify PyTorch/ONNX parity, CPU latency, memory use, licensing, model checksum, expert review, and production rollback.
+
+The detector path currently expects the Ultralytics ONNX output shape `[1, 4 + class_count, detection_count]` with `xywh` box coordinates in the model input pixel space. It intentionally does not claim accuracy or perform release approval.
 
 The approval marker is an operator assertion, not a cryptographic approval system. Production must control bundle write access and preserve evaluation artifacts. The optional GPU training/export path has no real dataset bundled and must be validated on your training machine. Never enable a candidate just to make the UI show predictions.
 

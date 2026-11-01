@@ -54,3 +54,19 @@ def test_loader_validates_checksum_labels_output_and_normalization(tmp_path,monk
     for change,match in [({'sha256':'b'*64},'checksum'),({'species_ids':['a','a']},'unique'),({'std':[0,1,1]},'positive'),({'model_file':'../escape.onnx'},'inside')]:
         path.write_text(json.dumps({**manifest,**change}))
         with pytest.raises(ValueError,match=match): Inference(str(path),{'a','b'})
+
+
+def test_detector_returns_best_species_and_rejects_empty_output(tmp_path):
+    photo=tmp_path/'a.jpg'
+    Image.new('RGB',(640,480)).save(photo)
+    model=Inference('',set())
+    model.manifest=SimpleNamespace(input_size=640,mean=(0,0,0),std=(1,1,1),temperature=1.,
+                                   confidence_threshold=.5,margin_threshold=0,energy_threshold=0,
+                                   iou_threshold=.45,max_detections=20,task='detection',
+                                   species_ids=['a','b'])
+    model._detections=lambda tensor: [(0.91, 1, (0, 0, 10, 10)), (0.72, 0, (20, 20, 30, 30))]
+    result=model.predict(photo,[],2)
+    assert result['status']=='identified'
+    assert result['candidates'][0]=={'species_id':'b','confidence':.91}
+    model._detections=lambda tensor: []
+    assert model.predict(photo,[],2)['reason']=='no_crab_detected'

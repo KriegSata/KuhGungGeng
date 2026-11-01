@@ -1,5 +1,5 @@
 from typing import Literal
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 SAFETY_WARNING = "Do not consume, handle, buy, or harvest a crab based solely on this identification. A photograph cannot establish food safety. Consult a qualified local expert and current local advisories."
 
@@ -41,11 +41,21 @@ class DatasetSubmission(BaseModel):
     observation_group: str = Field(min_length=1, max_length=200)
     training_rights: bool
     redistribution_rights: bool
+    bbox_xywh: tuple[float, float, float, float] | None = None
+
+    @field_validator("bbox_xywh")
+    @classmethod
+    def valid_bbox(cls, value):
+        if value is not None and (not all(0 <= coordinate <= 1 for coordinate in value[:2])
+                                  or not all(0 < dimension <= 1 for dimension in value[2:])):
+            raise ValueError("bbox_xywh must be normalized x/y/width/height values")
+        return value
 
 
 class ModelManifest(BaseModel):
     version: str
     model_file: str
+    task: Literal["classification", "detection"] = "classification"
     sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     species_ids: list[str] = Field(min_length=2)
     input_size: int = Field(ge=128, le=1024)
@@ -58,3 +68,5 @@ class ModelManifest(BaseModel):
     dataset_version: str
     evaluation_report: str
     approved_for_release: bool = False
+    iou_threshold: float = Field(default=0.45, gt=0, lt=1)
+    max_detections: int = Field(default=20, ge=1, le=100)
