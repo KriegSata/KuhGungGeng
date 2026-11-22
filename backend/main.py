@@ -20,6 +20,7 @@ from .config import Settings
 from .db import Audit, Base, DatasetItem, Feedback, Prediction, SessionRecord, Species, Upload, database
 from .images import sanitize, scan
 from .inference import Inference
+from .species_facts import enrich
 from .schemas import DatasetSubmission, FeedbackRequest, PredictRequest, ReviewRequest, SAFETY_WARNING
 
 
@@ -53,8 +54,11 @@ def create_app(settings: Settings | None = None):
                 from .classifier_catalog import documents as classifier_documents
                 documents.extend(classifier_documents())
             for document in documents:
-                if not db.get(Species, document["id"]):
-                    db.add(Species(id=document["id"], document=document))
+                record = db.get(Species, document["id"])
+                if record:
+                    record.document = enrich(record.document)
+                else:
+                    db.add(Species(id=document["id"], document=enrich(document)))
         with sessions() as db:
             ids = set(db.scalars(select(Species.id)).all())
         if settings.experimental_classifier:

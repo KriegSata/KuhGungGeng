@@ -1,4 +1,24 @@
 /* Larger type and a quieter layout across the existing field-guide design. */
+.species-facts { margin-top: 28px; padding: 28px; background: #fafbf6; border: 1px solid #dce4d3; border-radius: 14px; }
+.species-facts .eyebrow { margin-bottom: 12px; }
+.species-facts h3 { font-size: 29px; line-height: 1.2; margin-bottom: 6px; }
+.species-facts .facts-scientific { color: #60705b; margin-bottom: 24px; }
+.facts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 30px; }
+.facts-grid > div { padding: 0 0 20px; min-width: 0; }
+.facts-grid dt { font-size: 15px; color: #52684d; margin-bottom: 8px; }
+.facts-grid dd { font-size: 19px; line-height: 1.55; color: #253b35; }
+.facts-caution dd { color: #8a4427; font-weight: 600; }
+.species-facts .facts-note { font-size: 15px; color: #65715d; margin: 20px 0 8px; }
+.facts-links { display: flex; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+.facts-links details { border: 0; padding: 8px 0; }
+.facts-links summary { padding: 0; }
+.facts-links a { display: block; font-size: 15px; margin-top: 12px; overflow-wrap: anywhere; }
+@media (max-width: 680px) {
+  .species-facts { padding: 22px 18px; }
+  .species-facts h3 { font-size: 26px; }
+  .facts-grid { grid-template-columns: 1fr; gap: 18px; }
+  .facts-grid dd { font-size: 18px; }
+}
 :root { font-size: 18px; --muted: #586b60; }
 p { line-height: 1.65; }
 main { max-width: 1280px; padding-inline: 40px; }

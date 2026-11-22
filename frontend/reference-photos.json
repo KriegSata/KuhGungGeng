@@ -1,0 +1,110 @@
+{
+  "scylla-serrata": {
+    "src": "/images/species/scylla-serrata.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Scylla_serrata_by_OpenCage.jpg",
+    "author": "OpenCage",
+    "license": "CC BY-SA 2.5",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+    "title": "Scylla serrata by OpenCage.jpg",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  },
+  "scylla-olivacea": {
+    "src": "/images/species/scylla-olivacea.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Scylla_olivacea_140351914.jpg",
+    "author": "Paulmathi Vinod",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "title": "Scylla olivacea 140351914.jpg",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  },
+  "scylla-tranquebarica": {
+    "src": "/images/species/scylla-tranquebarica.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Scylla_tranquebarica_(Philippines).jpg",
+    "author": "Obsidian Soul",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "title": "Scylla tranquebarica (Philippines).jpg",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  },
+  "portunus-pelagicus": {
+    "src": "/images/species/portunus-pelagicus.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Portunus_pelagicus.jpg",
+    "author": "TANAKA Juuyoh (田中十洋)",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "title": "Portunus pelagicus.jpg",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  },
+  "zosimus-aeneus": {
+    "src": "/images/species/zosimus-aeneus.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Zosimus_aeneus_344781148.jpg",
+    "author": "Анна Митрошенкова",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "title": "Zosimus aeneus 344781148.jpg",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  },
+  "atergatis-floridus": {
+    "src": "/images/species/atergatis-floridus.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Atergatis_floridus2.jpg",
+    "author": "by Was a bee",
+    "license": "Public domain",
+    "licenseUrl": "",
+    "title": "Atergatis floridus2.jpg",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  },
+  "cardisoma-carnifex": {
+    "src": "/images/species/cardisoma-carnifex.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Cardisoma_carnifex_(26862474844).jpg",
+    "author": "LiCheng Shih",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "title": "Cardisoma carnifex (26862474844).jpg",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  },
+  "charybdis-feriata": {
+    "src": "/images/species/charybdis-feriata.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Charyb_feriat_070406-3458_plrtu.JPG",
+    "author": "Wibowo Djatmiko (Wie146)",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "title": "Charyb feriat 070406-3458 plrtu.JPG",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  },
+  "hemigrapsus-sanguineus": {
+    "src": "/images/species/hemigrapsus-sanguineus.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Asian_Shore_Crab_(Hemigrapsus_sanguineus)_Little_Egg_Harbor_Township,_New_Jersey,_USA.jpg",
+    "author": "Chuck Homler d/b/a Focus On Wildlife",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "title": "Asian Shore Crab (Hemigrapsus sanguineus) Little Egg Harbor Township, New Jersey, USA.jpg",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  },
+  "ocypode-ceratophthalma": {
+    "src": "/images/species/ocypode-ceratophthalma.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Ocypode_ceratophthalmus_140811471.jpg",
+    "author": "陳達智",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "title": "Ocypode ceratophthalmus 140811471.jpg",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  },
+  "portunus-sanguinolentus": {
+    "src": "/images/species/portunus-sanguinolentus.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Portunus_sanguinolentus_115960522.jpg",
+    "author": "Mohammad Amin Ghaffari",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "title": "Portunus sanguinolentus 115960522.jpg",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  },
+  "ranina-ranina": {
+    "src": "/images/species/ranina-ranina.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Ranina_ranina.jpg",
+    "author": "Kzhr",
+    "license": "CC BY-SA 2.5",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+    "title": "Ranina ranina.jpg",
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+  }
+}

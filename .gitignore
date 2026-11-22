@@ -17,3 +17,6 @@ models/*.onnx
 playwright-report/
 test-results/
 *.tsbuildinfo
+Crabs/
+crabs_annotations.jsonl
+crabs_annotations.report.json
