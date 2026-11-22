@@ -1,3 +1,29 @@
+.candidate > .candidate-names { display: flex; flex: 1; min-width: 0; flex-wrap: wrap; gap: 5px 14px; align-items: baseline; }
+.candidate-names strong { font-size: 22px; font-weight: 600; }
+.candidate-names em { font-size: 20px; color: #5b7156; }
+.candidate > .candidate-score { font-size: 14px; }
+.species-name-pair { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 15px; margin-bottom: 20px; }
+.species-name-pair h3 { margin: 0; }
+.species-name-pair em { font-size: 19px; color: #5b7156; }
+.species-description { line-height: 1.7; max-width: 850px; }
+.nutrition-section { margin-block: 24px; padding-top: 24px; border-top: 1px solid #dce4d3; }
+.nutrition-section h4 { font-size: 23px; font-weight: 600; margin: 0 0 12px; }
+.nutrition-section .nutrition-basis { font-size: 15px; color: #5e705b; margin-bottom: 18px; }
+.nutrition-cholesterol { padding: 20px; border: 1px solid #d5decd; border-radius: 12px; background: #f1f5eb; margin-bottom: 20px; }
+.nutrition-cholesterol > div { display: flex; gap: 15px; justify-content: space-between; align-items: baseline; flex-wrap: wrap; }
+.nutrition-cholesterol strong { font-size: 28px; }
+.cholesterol-label { display: block; font-size: 15px; margin-top: 8px; }
+.nutrition-cholesterol.high { border-color: #d8877d; color: #9b2524; background: #fff0ed; }
+.nutrition-cholesterol.high .cholesterol-label { font-weight: 700; }
+.nutrient-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.nutrient-grid > div { padding: 0 0 12px; }
+.nutrient-grid dt { font-size: 14px; color: #5e705b; }
+.nutrient-grid dd { font-size: 23px; color: #253b35; }
+.nutrient-grid dd span { font-size: 15px; }
+.nutrition-section .nutrition-note, .nutrition-section .nutrition-unknown { font-size: 15px; color: #5e705b; }
+.nutrition-section .nutrition-note { margin-top: 16px; }
+.nutrition-sources { display: grid; gap: 10px; font-size: 14px; line-height: 1.5; }
+@media (max-width: 680px) { .nutrient-grid { grid-template-columns: 1fr 1fr; } .candidate-names strong { font-size: 20px; } }
 .guide-tools { display: flex; align-items: center; gap: 24px; margin: 28px 0 32px; }
 .guide-tools .search { flex: 1; margin: 0; max-width: 640px; border-radius: 12px; }
 .guide-tools > span { font-size: 15px; color: #5e705b; white-space: nowrap; }

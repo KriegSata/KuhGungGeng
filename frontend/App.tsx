@@ -3,6 +3,7 @@ import {ArrowRight, BookOpen, Camera, Check, ChevronLeft, Compass, History, Imag
 import {api, startSession, validateFile} from './api';
 import type {Prediction, Species} from './types';
 import SpeciesPhoto, {PhotoCredit} from './SpeciesPhoto';
+import NutritionDetails from './NutritionDetails';
 
 const warning = 'Do not consume a crab based solely on model output. A photograph cannot establish food safety.';
 const words = (value:string) => value.replaceAll('_',' ');
@@ -94,10 +95,10 @@ export default function App() {
       </div><aside className="tips"><div className="eyebrow">BEFORE YOU UPLOAD</div><h2>A clearer photo.<br/>A better match.</h2><ol><li><span>1</span><div><strong>Show the whole crab</strong><p>Shell, claws, and legs in view.</p></div></li><li><span>2</span><div><strong>Use natural light</strong><p>Keep it sharp. Avoid glare.</p></div></li><li><span>3</span><div><strong>Keep a safe distance</strong><p>Photograph without touching.</p></div></li></ol></aside></section>
       {!modelAvailable && <div className="model-notice"><Info size={19}/><div><strong>Identification model awaiting validation</strong><p>Photo uploads are available. Predictions are not yet enabled.</p></div></div>}
       {result && <button className="secondary reopen-result" onClick={()=>setResultOpen(true)}>View last result <ArrowRight size={17}/></button>}
-      {result && <ResultDialog open={resultOpen} onClose={()=>setResultOpen(false)}><section className="result" aria-live="polite"><div className="eyebrow">YOUR OBSERVATION</div><h2 id="prediction-title">{result.status==='identified'?'A possible identification':'Not enough information to identify this crab'}</h2><p>{result.reason==='model_unavailable'?'No validated identification model is installed. Your image was processed, but no species prediction was made.':result.reason?`We could not make a reliable species identification: ${words(result.reason)}.`:'This is a model suggestion. Compare diagnostic traits and consult an expert when uncertain.'}</p>
+      {result && <ResultDialog open={resultOpen} onClose={()=>setResultOpen(false)}><section className="result" aria-live="polite"><div className="eyebrow">YOUR OBSERVATION</div><h2 id="prediction-title">{result.status==='identified'?'Confident identification':'Uncertain identification'}</h2><p>{result.reason==='model_unavailable'?'No validated identification model is installed. Your image was processed, but no species prediction was made.':result.reason?`We could not make a reliable species identification: ${words(result.reason)}.`:'This is a model suggestion. Compare diagnostic traits and consult an expert when uncertain.'}</p>
         <img className="result-photo" src={`/api/uploads/${result.upload_id}/image`} alt="Crab photograph for this observation" onError={e=>{e.currentTarget.hidden=true;}}/>
         {result.experimental && <span className="model-badge">Experimental · 8 species</span>}
-        {result.candidates.map(c=><button className="candidate" key={c.species_id} onClick={()=>{setSelected(species.find(s=>s.id===c.species_id)||null);setTab('guide');}}><em>{c.scientific_name}</em><span>{Math.round(c.confidence*100)}% supported-class score <ArrowRight size={15}/></span></button>)}
+        {result.candidates.map(c=><button className="candidate" key={c.species_id} onClick={()=>{setSelected(species.find(s=>s.id===c.species_id)||null);setTab('guide');}}><span className="candidate-names"><strong>{c.english_name||species.find(s=>s.id===c.species_id)?.english_name||c.names.find(n=>n.language==='en')?.name||'English name unavailable'}</strong><em>{c.scientific_name}</em></span><span className="candidate-score">{Math.round(c.confidence*100)}% supported-class score <ArrowRight size={15}/></span></button>)}
         {identifiedSpecies && <SpeciesFacts species={identifiedSpecies} onMore={()=>{setSelected(identifiedSpecies);setTab('guide');}}/>}
         {result.quality_warnings.length>0 && <p className="quality">Photo checks: {result.quality_warnings.map(words).join(', ')}. These checks are approximate.</p>}
         <p className="result-caution"><ShieldCheck size={19}/> A photo cannot confirm food safety.</p>
@@ -137,7 +138,7 @@ function ResultDialog({open,onClose,children}:{open:boolean;onClose:()=>void;chi
 function GuideCard({species:s,onSelect}:{species:Species;onSelect:()=>void}) {
   return <article className="species-card photo-card"><button className="guide-card-button" onClick={onSelect} aria-label={`View ${s.english_name}`}>
     <div className="guide-card-photo"><SpeciesPhoto species={s}/>{s.toxicity==='toxic'&&<span className="toxicity-badge"><ShieldCheck size={15}/> Toxic species</span>}</div>
-    <div className="species-card-copy"><h2>{s.english_name}</h2><em>{s.scientific_name}</em><p>{s.habitat}</p><span className="text-button">Explore species <ArrowRight size={17}/></span></div>
+    <div className="species-card-copy"><h2>{s.english_name}</h2><em>{s.scientific_name}</em><p>{s.description||s.habitat}</p><span className="text-button">Explore species <ArrowRight size={17}/></span></div>
   </button><div className="card-photo-credit"><PhotoCredit species={s}/></div></article>;
 }
 
@@ -146,13 +147,15 @@ function SpeciesFacts({species:s,onMore}:{species:Species;onMore:()=>void}) {
   const poisonous=s.toxicity==='toxic' ? 'Known toxic species' : s.toxicity==='diet_related_risk_reported' ? 'Diet-related poisoning reported' : s.toxicity==='unknown' ? 'Not established' : words(s.toxicity);
   return <section className="species-facts" aria-label="Identified species details">
     <div className="eyebrow">ABOUT THIS SPECIES</div>
-    <h3>{s.english_name}</h3><p className="facts-scientific"><em>{s.scientific_name}</em></p>
+    <div className="species-name-pair"><h3>{s.english_name}</h3><em>{s.scientific_name}</em></div>
+    {s.description && <p className="species-description">{s.description}</p>}
     <dl className="facts-grid">
       <div><dt>Edible?</dt><dd>{edibility}</dd></div>
       <div className={s.toxicity==='toxic'||s.toxicity==='diet_related_risk_reported'?'facts-caution':undefined}><dt>Poisonous?</dt><dd>{poisonous}</dd></div>
       <div><dt>Where to look</dt><dd>{s.habitat}</dd></div>
       <div><dt>Where it occurs</dt><dd>{s.distribution}</dd></div>
     </dl>
+    <NutritionDetails species={s}/>
     <p className="facts-note">Species reference only. Edibility does not establish the safety of the photographed crab.</p>
     <div className="facts-links"><button className="text-button" onClick={onMore}>Full species details <ArrowRight size={17}/></button>
       {s.sources.length>0 && <details><summary>Sources</summary>{s.sources.map(source=><a key={source.id} href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a>)}</details>}
@@ -166,6 +169,8 @@ function SpeciesDetail({species:s,back}:{species:Species;back:()=>void}) {
     <div className="eyebrow">{words(s.identification_status)} · {s.last_reviewed?`Reviewed ${s.last_reviewed}`:'Expert review pending'}</div>
     <h1>{s.english_name}</h1><p className="latin">{s.scientific_name}</p>
     <SpeciesPhoto species={s} large/>
+    {s.description && <p className="species-description">{s.description}</p>}
+    <NutritionDetails species={s}/>
     <p className="safety"><ShieldCheck size={20}/>{s.safety_warning}</p>
     <div className="detail-grid"><section><h2>What to look for</h2><ul>{s.diagnostic_traits.map(t=><li key={t}>{t}</li>)}</ul>
       <h3>Life stage & limitations</h3><p>{s.life_stage_notes}</p><h3>Similar species</h3><p>{s.lookalikes.join(', ')||'Not yet reviewed'}</p>

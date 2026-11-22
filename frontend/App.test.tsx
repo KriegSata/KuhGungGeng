@@ -35,7 +35,8 @@ describe('identification interface',()=>{
   fireEvent.change(screen.getByLabelText('Choose crab photograph'),{target:{files:[new File(['photo'],'crab.jpg',{type:'image/jpeg'})]}});
   const identify=screen.getByRole('button',{name:'Identify crab'});
   await waitFor(()=>expect(identify).toBeEnabled());fireEvent.click(identify);
-  await screen.findByRole('button',{name:/Test crab/});
+  expect(await screen.findByRole('button',{name:/Test crab/})).toHaveTextContent('Reference crab');
+  expect(screen.getByRole('heading',{name:status==='identified'?'Confident identification':'Uncertain identification'})).toBeInTheDocument();
   if(expected){
    expect(screen.getByRole('region',{name:'Identified species details'})).toBeInTheDocument();
    expect(screen.getByText(expected)).toBeInTheDocument();
@@ -57,10 +58,10 @@ describe('identification interface',()=>{
   fireEvent.change(screen.getByLabelText('Choose crab photograph'),{target:{files:[new File(['photo'],'crab.jpg',{type:'image/jpeg'})]}});
   const identify=screen.getByRole('button',{name:'Identify crab'});
   await waitFor(()=>expect(identify).toBeEnabled());fireEvent.click(identify);
-  expect(await screen.findByText('Not enough information to identify this crab')).toBeInTheDocument();
+  expect(await screen.findByText('Uncertain identification')).toBeInTheDocument();
   expect(fetchMock).toHaveBeenCalledWith('/api/uploads',expect.objectContaining({method:'POST',body:expect.any(FormData)}));
   expect(screen.getByText('No validated identification model is installed. Your image was processed, but no species prediction was made.')).toBeInTheDocument();
-  const dialog=screen.getByRole('dialog',{name:'Not enough information to identify this crab'});
+  const dialog=await screen.findByRole('dialog',{name:'Uncertain identification'});
   expect(dialog).toHaveAttribute('open');
   fireEvent.click(screen.getByRole('button',{name:'Close prediction'}));
   await waitFor(()=>expect(dialog).not.toHaveAttribute('open'));
