@@ -142,4 +142,10 @@ def main():
     run = Path(model.trainer.save_dir)
     (run / 'candidate-report.json').write_text(json.dumps(dict(
         task='classification', approved_for_release=False, test_evaluated=False,
-        d
+        dataset=str(args.data.resolve()), classes=report['classes'],
+        limitations=report['limitations']), indent=2), encoding='utf-8')
+    print(f'Candidate weights: {run / "weights/best.pt"}', flush=True)
+
+
+if __name__ == '__main__':
+    main()

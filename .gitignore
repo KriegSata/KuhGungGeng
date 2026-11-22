@@ -2,6 +2,7 @@
 .venv-training/
 .python/
 runs/
+yolov8n-cls.pt
 .cache/
 __pycache__/
 .pytest_cache/
