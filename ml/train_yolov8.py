@@ -65,15 +65,22 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--model", default="yolov8n.pt")
+    parser.add_argument("--device", default="0", help="CUDA device index, or cpu")
+    parser.add_argument("--batch", type=int, default=8)
+    parser.add_argument("--workers", type=int, default=0, help="Data loader workers (0 is reliable on Windows)")
     args = parser.parse_args()
     if args.epochs < 1:
         raise ValueError("At least one epoch is required")
+    if args.batch < 1 or args.workers < 0:
+        raise ValueError("Batch must be positive and workers nonnegative")
     rows, labels = load_rows(args.manifest, args.root)
     prepare_dataset(rows, labels, args.root.resolve(), args.output.resolve())
 
     from ultralytics import YOLO
     model = YOLO(args.model)
-    model.train(data=str(args.output / "data.yaml"), epochs=args.epochs, imgsz=640, seed=42)
+    model.train(data=str(args.output.resolve() / "data.yaml"), epochs=args.epochs,
+                imgsz=640, seed=42, device=args.device, batch=args.batch,
+                workers=args.workers, project=str(args.output.resolve() / "runs"))
     exported = model.export(format="onnx", imgsz=640, nms=False, dynamic=False)
     destination = args.output / "model.onnx"
     destination.write_bytes(Path(exported).read_bytes())

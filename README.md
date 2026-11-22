@@ -66,6 +66,49 @@ Images become inaccessible after 24 hours; prediction history expires after 30 d
 
 ### YOLOv8 preparation checklist
 
+#### Image classification without bounding boxes
+
+For an experimental whole-image species classifier, use the class folders in `Crabs`:
+
+```powershell
+.venv-training\Scripts\python -m ml.train_classification Crabs data/crabs-classification --prepare-only
+.venv-training\Scripts\python -m ml.train_classification Crabs data/crabs-classification --reuse-data --epochs 30 --batch 32
+```
+
+Preparation decodes images, removes exact duplicates, excludes conflicting duplicate labels,
+and keeps connected perceptual near-duplicates together across deterministic 70/15/15 splits.
+It copies normalized JPEGs into `data/crabs-classification`; source photos and annotations remain intact.
+Inspect `preparation-report.json` and the frozen `split.jsonl` there. Folder names are provisional labels;
+source/photographer grouping and rights still require review. Test images stay out of training validation.
+Training uses `yolov8n-cls.pt`, 224-pixel inputs, GPU 0, and zero loader workers on Windows.
+Weights and metrics appear under `runs/classify/crabs-yolov8n` (or a numbered directory on later runs).
+Use `weights/best.pt` for experimental predictions with the Ultralytics classification API.
+This classifier is not a release-approved API bundle; app integration needs matching preprocessing
+and output handling, species registration, evaluation, and rejection calibration.
+
+#### Windows RTX 5060 training setup
+
+Run `powershell -ExecutionPolicy Bypass -File scripts/setup-training.ps1` from the repository root.
+This uses `uv` to install project-local Python 3.12.10 and an isolated `.venv-training`,
+installs PyTorch 2.7.1 / torchvision 0.22.1 with CUDA 12.8 for RTX 50-series GPUs,
+installs the training extras, checks GPU NMS and a YOLOv8 forward/backward pass,
+and saves the installed versions in `requirements-training.lock`.
+The initial download includes approximately 3 GB for PyTorch. No separate CUDA toolkit is required.
+Select `.venv-training\Scripts\python.exe` as the interpreter in VS Code.
+
+After preparing a reviewed split manifest with bounding boxes, run:
+
+```powershell
+.venv-training\Scripts\python -m ml.train_yolov8 split.jsonl Crabs models/yolov8-candidate --model yolov8n.pt --epochs 50 --device 0 --batch 8 --workers 0
+```
+
+Start with batch 8 at 640 pixels for the 8 GB GPU; reduce to 4 if GPU memory is exhausted.
+The command downloads pretrained weights on first use and exports a candidate ONNX bundle.
+Recheck the environment with `.venv-training\Scripts\python scripts/check_training.py`.
+The `Crabs` class folders alone are insufficient for detection: supply real bounding-box annotations,
+image checksums, rights/review metadata, and frozen split assignments first. See `ml/train_yolov8.py`
+for the manifest fields. The setup check uses random tensors and does not train on these photos.
+
 Before a detector can be approved:
 
 - Annotate every crab with a bounding box in normalized `x_center, y_center, width, height` format; annotate multi-crab images separately.

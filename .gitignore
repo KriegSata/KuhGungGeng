@@ -1,4 +1,7 @@
 .venv/
+.venv-training/
+.python/
+runs/
 .cache/
 __pycache__/
 .pytest_cache/

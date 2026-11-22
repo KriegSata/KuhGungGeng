@@ -19,7 +19,7 @@ training = ["torch>=2.6,<3", "torchvision>=0.21,<1", "onnx>=1.17,<2", "onnxrunti
 test = ["pytest>=8,<10", "httpx>=0.28,<1", "pytest-cov>=6,<8"]
 
 [tool.setuptools.packages.find]
-include = ["backend*"]
+include = ["backend*", "ml*"]
 
 [tool.setuptools.package-data]
 backend = ["seed/*.json"]
