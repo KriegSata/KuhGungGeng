@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -7,6 +8,7 @@ pytest.importorskip('ultralytics', reason='Requires optional training dependenci
 
 from backend.classifier import ExperimentalClassifier
 from backend.main import create_app
+from backend.config import Settings
 
 
 def test_native_probabilities_are_not_softmaxed_again(tmp_path, monkeypatch):
@@ -40,3 +42,24 @@ def test_experimental_checkpoint_is_blocked_in_production(settings):
     with pytest.raises(RuntimeError, match='local development only'):
         with TestClient(create_app(settings)):
             pass
+
+
+def test_fresh_checkout_uses_bundled_checkpoint(tmp_path):
+    from fastapi.testclient import TestClient
+
+    root = Path(__file__).resolve().parents[1]
+    settings = Settings(
+        _env_file=root / '.env.example',
+        data_dir=tmp_path,
+        database_url=f"sqlite:///{tmp_path / 'fresh.db'}",
+    )
+    assert (root / settings.experimental_classifier).is_file()
+    with TestClient(create_app(settings)) as client:
+        inference = client.app.state.inference
+        assert inference.info()['available'] is True
+        assert len(inference.info()['species_ids']) == 8
+        image = root / 'public/images/species/scylla-serrata.jpg'
+        result = inference.predict(image, [], 3)
+        assert len(result['candidates']) == 3
+        assert result['reason'] != 'model_unavailable'
+        assert all(0 <= item['confidence'] <= 1 for item in result['candidates'])

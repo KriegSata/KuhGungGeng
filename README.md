@@ -1,6 +1,6 @@
 # KuhGungGeng
 
-A Philippine crab identification assistant: React/TypeScript, FastAPI, SQLAlchemy, and an optional ONNX classifier. The application is runnable locally. **No trained model is bundled, and the six reference species entries are provisional.** Without a validated model, every image receives an explicit abstention with no invented scores.
+A Philippine crab identification assistant: React/TypeScript, FastAPI, SQLAlchemy, and an optional ONNX classifier. **A trained experimental classifier is bundled at `runs/classify/crabs-yolov8n-2/weights/best.pt`. No training dataset or retraining is needed to run predictions on another machine.** Species entries and classifier results are provisional; this model is not approved for production.
 
 ## Run locally
 
@@ -8,7 +8,7 @@ Requires Python 3.11+ (3.12 recommended) and Node 24+.
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\python -m pip install -c requirements-dev.lock -e ".[test]"
+.venv\Scripts\python -m pip install -c requirements-dev.lock -e ".[test,training]"
 Copy-Item .env.example .env
 .venv\Scripts\python -m uvicorn backend.main:app --reload
 ```
@@ -21,6 +21,8 @@ npm run dev
 ```
 
 Open **http://127.0.0.1:5173**. API documentation: **http://127.0.0.1:8000/docs**. Vite proxies `/api` to FastAPI; use one hostname consistently for session cookies. Linux/macOS use `.venv/bin/python` and `cp` instead.
+
+The copied `.env.example` enables the bundled checkpoint. Install dependencies once per machine; subsequent pulls reuse the checkpoint and require no training. If you already have a `.env`, set `EXPERIMENTAL_CLASSIFIER=runs/classify/crabs-yolov8n-2/weights/best.pt` and restart the backend. Predictions run on CPU; a GPU is not required. The `Crabs/` training photos, generated splits, and annotations are intentionally excluded from Git. Clear `EXPERIMENTAL_CLASSIFIER` for no-model mode or to use an approved `MODEL_MANIFEST` bundle instead.
 
 Alternatively: `docker compose up --build`, then open **http://localhost:8080**. This Compose configuration is a local development deployment with PostgreSQL and hourly cleanup; it is not configured for public exposure.
 

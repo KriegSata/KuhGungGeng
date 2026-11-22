@@ -19,6 +19,7 @@ services:
       DATA_DIR: /app/data
       ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
       ADMIN_API_KEY: ${ADMIN_API_KEY:-}
+      EXPERIMENTAL_CLASSIFIER: runs/classify/crabs-yolov8n-2/weights/best.pt
     ports:
       - "127.0.0.1:8000:8000"
     volumes:

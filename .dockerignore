@@ -9,3 +9,13 @@ dist
 __pycache__
 .pytest_cache
 .coverage
+Crabs
+crabs_annotations.jsonl
+crabs_annotations.report.json
+.venv-training
+.python
+runs/**
+!runs/classify/
+!runs/classify/crabs-yolov8n-2/
+!runs/classify/crabs-yolov8n-2/weights/
+!runs/classify/crabs-yolov8n-2/weights/best.pt
