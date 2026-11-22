@@ -8,7 +8,7 @@ from backend.main import create_app
 
 @pytest.fixture
 def settings(tmp_path):
-    return Settings(data_dir=tmp_path, database_url=f"sqlite:///{tmp_path / 'test.db'}", admin_api_key="test-reviewer-key", rate_limit=1000, _env_file=None)
+    return Settings(data_dir=tmp_path, database_url=f"sqlite:///{tmp_path / 'test.db'}", admin_api_key="test-reviewer-key", rate_limit=1000, use_bundled_classifier=False, _env_file=None)
 
 
 @pytest.fixture

@@ -9,6 +9,8 @@ from ultralytics import YOLO
 class ExperimentalClassifier:
     def __init__(self, checkpoint: str, species_ids: set[str]):
         path = Path(checkpoint).resolve()
+        if not path.is_file():
+            raise FileNotFoundError(f'Trained checkpoint is missing: {path}. Pull the latest repository including best.pt; no retraining is required.')
         self.model = YOLO(str(path), task='classify')
         if self.model.task != 'classify':
             raise ValueError('Experimental checkpoint must be a classifier')

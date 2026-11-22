@@ -22,7 +22,7 @@ npm run dev
 
 Open **http://127.0.0.1:5173**. API documentation: **http://127.0.0.1:8000/docs**. Vite proxies `/api` to FastAPI; use one hostname consistently for session cookies. Linux/macOS use `.venv/bin/python` and `cp` instead.
 
-The copied `.env.example` enables the bundled checkpoint. Install dependencies once per machine; subsequent pulls reuse the checkpoint and require no training. If you already have a `.env`, set `EXPERIMENTAL_CLASSIFIER=runs/classify/crabs-yolov8n-2/weights/best.pt` and restart the backend. Predictions run on CPU; a GPU is not required. The `Crabs/` training photos, generated splits, and annotations are intentionally excluded from Git. Clear `EXPERIMENTAL_CLASSIFIER` for no-model mode or to use an approved `MODEL_MANIFEST` bundle instead.
+Development startup automatically loads the bundled checkpoint, even without a `.env` or with an older blank `EXPERIMENTAL_CLASSIFIER` setting. Install dependencies once per machine; subsequent pulls reuse the checkpoint and require no training. Restart the backend after pulling. Predictions run on CPU; a GPU is not required. The `Crabs/` training photos, generated splits, and annotations are intentionally excluded from Git. To deliberately disable predictions, set `USE_BUNDLED_CLASSIFIER=false` and clear `EXPERIMENTAL_CLASSIFIER`. Setting `MODEL_MANIFEST` selects an approved bundle instead when `EXPERIMENTAL_CLASSIFIER` is blank. Production never automatically enables the experimental model.
 
 Alternatively: `docker compose up --build`, then open **http://localhost:8080**. This Compose configuration is a local development deployment with PostgreSQL and hourly cleanup; it is not configured for public exposure.
 
@@ -98,8 +98,8 @@ The backend uses Ultralytics' native classification preprocessing on CPU and ret
 probabilities directly. It registers provisional catalog entries for all eight model classes
 and labels predictions experimental. Confidence 0.70 and margin 0.15 are provisional abstention
 thresholds; unknown-species rejection is not calibrated. This path is refused in production
-and does not change the approval requirements for ONNX bundles. Clear this setting to return
-to `MODEL_MANIFEST` or the no-model behavior. Install `.[training]` in the backend environment
+and does not change the approval requirements for ONNX bundles. Clear this setting to use
+`MODEL_MANIFEST`, or also set `USE_BUNDLED_CLASSIFIER=false` for no-model behavior. Install `.[training]` in the backend environment
 when enabling this checkpoint path.
 
 #### Windows RTX 5060 training setup

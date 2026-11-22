@@ -44,12 +44,17 @@ def test_experimental_checkpoint_is_blocked_in_production(settings):
             pass
 
 
-def test_fresh_checkout_uses_bundled_checkpoint(tmp_path):
+@pytest.mark.parametrize('configuration', ['example', 'missing', 'legacy_blank'])
+def test_fresh_checkout_uses_bundled_checkpoint(tmp_path, monkeypatch, configuration):
     from fastapi.testclient import TestClient
 
     root = Path(__file__).resolve().parents[1]
+    monkeypatch.chdir(tmp_path)
+    env_file = root / '.env.example' if configuration == 'example' else tmp_path / '.env'
+    if configuration == 'legacy_blank':
+        env_file.write_text('EXPERIMENTAL_CLASSIFIER=\n')
     settings = Settings(
-        _env_file=root / '.env.example',
+        _env_file=env_file,
         data_dir=tmp_path,
         database_url=f"sqlite:///{tmp_path / 'fresh.db'}",
     )
@@ -63,3 +68,9 @@ def test_fresh_checkout_uses_bundled_checkpoint(tmp_path):
         assert len(result['candidates']) == 3
         assert result['reason'] != 'model_unavailable'
         assert all(0 <= item['confidence'] <= 1 for item in result['candidates'])
+
+
+def test_bundled_model_selection_respects_other_modes():
+    assert Settings(_env_file=None, app_env='production').experimental_classifier == ''
+    assert Settings(_env_file=None, use_bundled_classifier=False).experimental_classifier == ''
+    assert Settings(_env_file=None, model_manifest='approved.json').experimental_classifier == ''
