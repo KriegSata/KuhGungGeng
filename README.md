@@ -6,6 +6,16 @@ A Philippine crab identification assistant: React/TypeScript, FastAPI, SQLAlchem
 
 Requires Python 3.11+ (3.12 recommended) and Node 24+.
 
+On Windows, run this single command from the repository folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/start.ps1
+```
+
+It installs dependencies, selects the included `best.pt` even with older `.env` settings, verifies that the model is loaded, and starts both servers. It never trains a model or downloads training photos. Stop any previously running app first. The first run needs internet for dependency installation. Open http://127.0.0.1:5173 after the script confirms the model loaded.
+
+For manual setup:
+
 ```powershell
 python -m venv .venv
 .venv\Scripts\python -m pip install -c requirements-dev.lock -e ".[test,training]"
