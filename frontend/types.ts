@@ -9,6 +9,7 @@ export type Species = {
   identification_status:string; last_reviewed:string|null; sources:Source[];
 };
 export type Prediction = {
+  experimental?:boolean;
   id:string; upload_id:string; status:string; reason:string|null; model_version:string; created_at:number;
   candidates:{species_id:string; scientific_name:string; names:Species['names']; confidence:number}[];
   ood:{detected:boolean|null; score:number|null; method:string}; quality_warnings:string[];

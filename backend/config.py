@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     admin_api_key: str = ""
     model_manifest: str = ""
+    experimental_classifier: str = ""
     clamav_host: str = ""
     clamav_port: int = 3310
     max_upload_bytes: int = 10 * 1024 * 1024

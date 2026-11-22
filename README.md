@@ -86,6 +86,20 @@ Use `weights/best.pt` for experimental predictions with the Ultralytics classifi
 This classifier is not a release-approved API bundle; app integration needs matching preprocessing
 and output handling, species registration, evaluation, and rejection calibration.
 
+For local app testing with the trained classifier, set this in `.env` and restart the backend:
+
+```dotenv
+EXPERIMENTAL_CLASSIFIER=runs/classify/crabs-yolov8n-2/weights/best.pt
+```
+
+The backend uses Ultralytics' native classification preprocessing on CPU and returns its
+probabilities directly. It registers provisional catalog entries for all eight model classes
+and labels predictions experimental. Confidence 0.70 and margin 0.15 are provisional abstention
+thresholds; unknown-species rejection is not calibrated. This path is refused in production
+and does not change the approval requirements for ONNX bundles. Clear this setting to return
+to `MODEL_MANIFEST` or the no-model behavior. Install `.[training]` in the backend environment
+when enabling this checkpoint path.
+
 #### Windows RTX 5060 training setup
 
 Run `powershell -ExecutionPolicy Bypass -File scripts/setup-training.ps1` from the repository root.

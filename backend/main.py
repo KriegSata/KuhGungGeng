@@ -40,18 +40,28 @@ def create_app(settings: Settings | None = None):
     @asynccontextmanager
     async def lifespan(app):
         if settings.app_env == "production":
+            if settings.experimental_classifier:
+                raise RuntimeError("Experimental classifiers are for local development only")
             if not settings.clamav_host or len(settings.admin_api_key) < 32 or not settings.model_manifest:
                 raise RuntimeError("Production requires ClamAV, a 32+ character admin key, and a validated model bundle")
             if any(not origin.startswith("https://") for origin in settings.origins):
                 raise RuntimeError("Production origins must use HTTPS")
         Base.metadata.create_all(engine)
         with sessions.begin() as db:
-            for document in json.loads((Path(__file__).parent / "seed" / "species.json").read_text(encoding="utf-8")):
+            documents = json.loads((Path(__file__).parent / "seed" / "species.json").read_text(encoding="utf-8"))
+            if settings.experimental_classifier:
+                from .classifier_catalog import documents as classifier_documents
+                documents.extend(classifier_documents())
+            for document in documents:
                 if not db.get(Species, document["id"]):
                     db.add(Species(id=document["id"], document=document))
         with sessions() as db:
             ids = set(db.scalars(select(Species.id)).all())
-        app.state.inference = Inference(settings.model_manifest, ids)
+        if settings.experimental_classifier:
+            from .classifier import ExperimentalClassifier
+            app.state.inference = ExperimentalClassifier(settings.experimental_classifier, ids)
+        else:
+            app.state.inference = Inference(settings.model_manifest, ids)
         if settings.app_env == "production":
             with sessions() as db:
                 for identity in app.state.inference.info()["species_ids"]:
@@ -231,7 +241,7 @@ def create_app(settings: Settings | None = None):
                 result.update({"id": identity, "request_id": request.state.request_id, "upload_id": item.id,
                                "model_version": app.state.inference.info()["version"], "created_at": time.time(),
                                "quality_warnings": item.warnings, "safety_disclaimer": SAFETY_WARNING,
-                               "confidence_explanation": "Scores are calibrated relative to supported species, not the probability that a crab is safe or that all other species are excluded.",
+                               "confidence_explanation": result.get("confidence_explanation", "Scores are calibrated relative to supported species, not the probability that a crab is safe or that all other species are excluded."),
                                "suggested_photos": ["dorsal", "side", "claw", "legs", "carapace", "ventral_if_safely_visible"],
                                "photo_guidance": "Photograph without touching or turning the animal. Juveniles and partial views may need expert examination."})
                 db.add(Prediction(id=identity, owner=user, upload_id=item.id, result=result))
