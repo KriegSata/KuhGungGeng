@@ -76,7 +76,7 @@ def create_app(settings: Settings | None = None):
         yield
         engine.dispose()
 
-    app = FastAPI(title="KuhGungGeng API", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="Shellfie API", version="0.1.0", lifespan=lifespan)
     app.add_middleware(CORSMiddleware, allow_origins=settings.origins, allow_credentials=True,
                        allow_methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type", "X-CSRF-Token", "X-Admin-Key"])
 

@@ -1,4 +1,4 @@
-# KuhGungGeng
+# Shellfie
 
 A Philippine crab identification assistant: React/TypeScript, FastAPI, SQLAlchemy, and an optional ONNX classifier. **A trained experimental classifier is bundled at `runs/classify/crabs-yolov8n-2/weights/best.pt`. No training dataset or retraining is needed to run predictions on another machine.** Species entries and classifier results are provisional; this model is not approved for production.
 
@@ -31,6 +31,8 @@ npm run dev
 ```
 
 Open **http://127.0.0.1:5173**. API documentation: **http://127.0.0.1:8000/docs**. Vite proxies `/api` to FastAPI; use one hostname consistently for session cookies. Linux/macOS use `.venv/bin/python` and `cp` instead.
+
+For a classroom demo, open **Blue swimming crab** in the field guide, choose **Try this example photo**, and select **Identify crab**. Switch between the model's suggestions to compare them with the example. The result is available under **My observations**.
 
 Development startup automatically loads the bundled checkpoint, even without a `.env` or with an older blank `EXPERIMENTAL_CLASSIFIER` setting. Install dependencies once per machine; subsequent pulls reuse the checkpoint and require no training. Restart the backend after pulling. Predictions run on CPU; a GPU is not required. The `Crabs/` training photos, generated splits, and annotations are intentionally excluded from Git. To deliberately disable predictions, set `USE_BUNDLED_CLASSIFIER=false` and clear `EXPERIMENTAL_CLASSIFIER`. Setting `MODEL_MANIFEST` selects an approved bundle instead when `EXPERIMENTAL_CLASSIFIER` is blank. Production never automatically enables the experimental model.
 

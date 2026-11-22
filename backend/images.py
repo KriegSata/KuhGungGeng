@@ -11,6 +11,9 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from .config import Settings
 
+# Keep the upload decoder independent of the optional classifier's Pillow patches.
+open_upload_image = Image.open
+
 
 def scan(content: bytes, settings: Settings) -> None:
     if not settings.clamav_host:
@@ -39,7 +42,7 @@ def sanitize(content: bytes, destination: Path, settings: Settings) -> dict:
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("error", Image.DecompressionBombWarning)
-            with Image.open(io.BytesIO(content)) as original:
+            with open_upload_image(io.BytesIO(content)) as original:
                 if original.format not in {"JPEG", "PNG", "WEBP"} or getattr(original, "n_frames", 1) != 1:
                     raise HTTPException(415, "Use a single-frame JPEG, PNG, or WebP image")
                 width, height = original.size
