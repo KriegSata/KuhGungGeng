@@ -1,0 +1,135 @@
+/* Larger type and a quieter layout across the existing field-guide design. */
+:root { font-size: 18px; --muted: #586b60; }
+p { line-height: 1.65; }
+main { max-width: 1280px; padding-inline: 40px; }
+.header { min-height: 104px; height: auto; padding-block: 20px; }
+.brand { font-size: 25px; }
+.brand-caption { font-size: 11px; letter-spacing: 1.3px; }
+.nav { font-size: 16px; padding: 13px 18px; }
+.region { font-size: 13px; }
+.eyebrow, .tips .eyebrow, .guide-preview .eyebrow { font-size: 13px; letter-spacing: 1.5px; }
+.hero { min-height: 410px; gap: 40px; padding-block: 36px; }
+.hero h1 { font-size: clamp(58px, 5.7vw, 80px); }
+.hero-copy > p { font-size: 21px; color: #586b60; max-width: 490px; margin-bottom: 0; }
+.specimen-label { font-size: 13px; }
+.specimen-label span, .art-note { font-size: 12px; color: #65725f; }
+.workspace { grid-template-columns: 1.45fr 1fr; gap: 28px; align-items: stretch; margin-top: 0; }
+.upload-card { padding: 32px; border-radius: 18px; box-shadow: 0 12px 35px #214e4107; }
+.section-heading { margin-bottom: 24px; gap: 16px; }
+.section-heading h2 { font-size: 28px; font-weight: 600; margin: 0; }
+.step { font-size: 14px; width: 42px; height: 42px; display: grid; place-items: center; padding: 0; flex-shrink: 0; }
+.dropzone { height: 290px; border-radius: 12px; gap: 12px; }
+.upload-icon { width: 72px; height: 72px; }
+.dropzone strong { font-size: 23px; font-weight: 600; }
+.dropzone > span:not(.upload-icon):not(.replace) { font-size: 17px; color: #647360; }
+.dropzone small { font-size: 14px; color: #647360; }
+.replace { font-size: 15px; padding: 11px 15px; }
+.upload-actions { margin-top: 22px; gap: 12px; }
+.primary, .secondary { font-size: 17px; min-height: 54px; padding: 15px 22px; border-radius: 9px; }
+.privacy { font-size: 14px; line-height: 1.6; color: #5e705f; margin-top: 20px; align-items: flex-start; }
+.privacy svg { flex-shrink: 0; margin-top: 3px; }
+.tips { padding: 34px; border-radius: 18px; }
+.tips h2 { font-size: 44px; line-height: 1.1; margin-bottom: 32px; }
+.tips li { margin-bottom: 26px; gap: 15px; }
+.tips li:last-child { margin-bottom: 0; }
+.tips li > span { width: 30px; height: 30px; font-size: 14px; }
+.tips strong { font-size: 19px; }
+.tips li p { font-size: 17px; color: #586b52; max-width: none; margin-top: 4px; }
+.model-notice strong { font-size: 17px; }
+.model-notice p { font-size: 16px; }
+.result { padding: 34px; border-radius: 18px; margin-top: 30px; }
+.result h2 { font-size: 32px; line-height: 1.2; margin-bottom: 14px; }
+.result p { font-size: 17px; }
+.model-badge { display: inline-flex; padding: 7px 12px; border: 1px solid #d8dfcb; border-radius: 30px; background: #eff3e7; color: #4f6549; font-size: 14px; margin: 2px 0 14px; }
+.candidate { padding: 22px; border-radius: 10px; align-items: center; margin-block: 12px; }
+.candidate em { font-size: 25px; overflow-wrap: anywhere; }
+.candidate span { font-size: 16px; flex-shrink: 0; }
+.candidate:first-of-type { border-color: #8ba17d; background: #edf3e7; }
+.result-caution { display: flex; align-items: flex-start; gap: 10px; color: #6b603d; margin: 20px 0; }
+.result-caution svg { flex-shrink: 0; margin-top: 3px; }
+details { margin: 0; padding-block: 20px; }
+summary { font-size: 17px; font-weight: 550; padding-block: 3px; }
+details[open] > summary { margin-bottom: 18px; }
+.result-info p { color: #586b60; }
+.photo-views span { font-size: 14px; }
+.muted, small.muted { font-size: 14px; color: #596d5b; overflow-wrap: anywhere; }
+.quality, .safety { font-size: 16px; }
+form label { font-size: 17px; }
+input, select, textarea { font-size: 17px; padding: 14px; border-radius: 8px; }
+textarea { min-height: 110px; }
+.guide-preview { margin-block: 44px; }
+.guide-preview h2 { font-size: 39px; }
+.text-button { font-size: 17px; }
+.bottom-warning { padding-block: 25px; align-items: flex-start; color: #5f6e58; }
+.bottom-warning p { font-size: 14px; max-width: 860px; }
+.bottom-warning svg { margin-top: 3px; }
+footer { max-width: 1280px; font-size: 14px; padding-inline: 40px; }
+footer button { font-size: 14px; color: #596d5b; }
+.error { font-size: 17px; }
+.catalog h1 { font-size: 60px; }
+.catalog > p { font-size: 18px; color: #586b60; }
+.search { max-width: 620px; }
+.species-card h2 { font-size: 24px; }
+.species-card em, .species-card p { font-size: 17px; color: #586b60; }
+.species-card-copy .eyebrow, .species-art > span { font-size: 12px; }
+.species-card-copy { padding: 25px; }
+.detail-grid h2 { font-size: 36px; }
+.detail-grid h3 { font-size: 21px; }
+.detail-grid p, .detail-grid li, dl > div { font-size: 18px; color: #586b60; }
+.detail small { font-size: 14px; }
+.empty h2 { font-size: 40px; }
+.empty p, .history-row p { font-size: 17px; }
+.history-row strong { font-size: 20px; }
+.review-item h2 { font-size: 26px; }
+
+@media (max-width: 1000px) {
+  .header { gap: 15px; padding-inline: 25px; }
+  .nav { padding-inline: 12px; }
+  .region { display: none; }
+  .workspace { grid-template-columns: 1.2fr 1fr; gap: 20px; }
+  .upload-card, .tips { padding: 25px; }
+  .tips h2 { font-size: 38px; }
+  .candidate { align-items: flex-start; flex-direction: column; }
+}
+@media (max-width: 680px) {
+  main { padding-inline: 20px; }
+  .header { padding: 20px 20px 12px; gap: 20px; }
+  .brand { font-size: 24px; }
+  .brand-caption { font-size: 10px; }
+  .nav { font-size: 14px; padding: 12px 9px; gap: 6px; min-height: 46px; }
+  .nav svg { width: 18px; height: 18px; }
+  .hero { min-height: 0; gap: 0; padding: 34px 0 20px; }
+  .hero h1 { font-size: clamp(48px, 11vw, 66px); }
+  .hero-copy > p { font-size: 20px; }
+  .hero .eyebrow { font-size: 12px; margin-bottom: 18px; }
+  .specimen { height: 190px; max-width: 290px; margin: 20px auto 10px; }
+  .specimen .crab-art { width: 270px; }
+  .specimen-orbit { width: 155px; height: 155px; }
+  .specimen-label { font-size: 11px; bottom: 0; }
+  .specimen-label span { display: none; }
+  .art-note { font-size: 11px; bottom: -8px; }
+  .workspace { grid-template-columns: 1fr; gap: 20px; }
+  .upload-card, .tips { padding: 24px 20px; }
+  .section-heading h2 { font-size: 25px; }
+  .dropzone { height: 265px; }
+  .dropzone strong { font-size: 21px; }
+  .dropzone > span:not(.upload-icon):not(.replace) { font-size: 16px; }
+  .primary, .secondary { font-size: 16px; padding: 14px 16px; }
+  .upload-actions > button { flex: 1 1 100%; }
+  .privacy { font-size: 14px; }
+  .tips h2 { font-size: 36px; margin-bottom: 24px; }
+  .tips strong { font-size: 18px; }
+  .tips li p { font-size: 16px; }
+  .result { padding: 25px 20px; }
+  .result h2 { font-size: 29px; }
+  .candidate { padding: 18px; gap: 12px; }
+  .candidate em { font-size: 24px; }
+  .candidate span { font-size: 15px; }
+  .eyebrow { font-size: 12px; }
+  .guide-preview h2 { font-size: 36px; }
+  .catalog h1 { font-size: 46px; }
+  .detail-grid { gap: 30px; }
+  .bottom-warning p { font-size: 14px; }
+  footer { padding: 25px 20px; font-size: 14px; }
+  .model-notice p { font-size: 16px; }
+}
