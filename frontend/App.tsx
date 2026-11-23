@@ -201,6 +201,7 @@ export default function App() {
 
   async function submitPhoto() {
     if (!photo || activity.current) return;
+    const sourceRoute = currentRoute();
     activity.current = true;
     setPhotoError('');
     setStage(photo.uploadId ? 'analyzing' : 'uploading');
@@ -217,7 +218,7 @@ export default function App() {
       const prediction = await api<Prediction>('/predictions', {method: 'POST', body: JSON.stringify({upload_id: uploadId, top_k: 3})});
       if (photo.example) rememberExample(prediction.id, photo.example.id);
       setLastResult(prediction);
-      if (currentRoute() === identify) location.hash = observationLink(prediction.id);
+      if (currentRoute() === sourceRoute) location.hash = observationLink(prediction.id);
     } catch (error) {
       if (error instanceof ApiError && error.status === 410) setPhoto({...photo, uploadId: undefined});
       setPhotoError((error as Error).message);
@@ -226,6 +227,12 @@ export default function App() {
       activity.current = false;
     }
   }
+
+  const picker = {
+    photo, preview, stage, error: photoError, model, retryModel,
+    onFile: (file: File) => void preparePhoto(() => file),
+    onSubmit: () => void submitPhoto(),
+  };
 
   return <>
     <a className="skip" href="#main" onClick={event => {event.preventDefault(); main.current?.focus();}}>Skip to content</a>
@@ -240,17 +247,15 @@ export default function App() {
       </div>
     </header>
     <main id="main" ref={main} tabIndex={-1} className="shell-main">
-      {guideActive && (catalog.status !== 'ready'
+      {route === guide && <Atlas catalog={catalog} retryCatalog={retryCatalog} picker={picker}
+        search={search} setSearch={setSearch} onOpen={() => setReturnTo(undefined)}/>}
+      {speciesId && (catalog.status !== 'ready'
         ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/>
-        : speciesId
-          ? selected
-            ? <SpeciesDetail species={selected} onExample={() => tryExample(selected)} busy={!!stage}
-                back={returnTo?.speciesId === selected.id ? returnTo.observation : guide}/>
-            : <section className="shell-page"><h1>Species unavailable</h1><a href={guide}>Back to the field guide</a></section>
-          : <Atlas species={species} search={search} setSearch={setSearch} onOpen={() => setReturnTo(undefined)}/>)}
-      {route === identify && <Capture photo={photo} preview={preview} stage={stage} error={photoError} model={model}
-        retryModel={retryModel} lastResult={lastResult} onFile={file => void preparePhoto(() => file)}
-        onSubmit={() => void submitPhoto()}/>}
+        : selected
+          ? <SpeciesDetail species={selected} onExample={() => tryExample(selected)} busy={!!stage}
+              back={returnTo?.speciesId === selected.id ? returnTo.observation : guide}/>
+          : <section className="shell-page"><h1>Species unavailable</h1><a href={guide}>Back to the field guide</a></section>)}
+      {route === identify && <Capture picker={picker} lastResult={lastResult}/>}
       {route === observations && <ObservationHistory species={species} onDelete={id => {
         if (lastResult?.id === id) setLastResult(undefined);
       }}/>}
@@ -279,9 +284,11 @@ function BrandLink() {
   </a>;
 }
 
-function Atlas({species, search, setSearch, onOpen}: {
-  species: Species[]; search: string; setSearch: (search: string) => void; onOpen: () => void;
+function Atlas({catalog, retryCatalog, picker, search, setSearch, onOpen}: {
+  catalog: Resource<{items: Species[]}>; retryCatalog: () => void; picker: PhotoPickerProps;
+  search: string; setSearch: (search: string) => void; onOpen: () => void;
 }) {
+  const species = catalog.status === 'ready' ? catalog.data.items : [];
   const featured = species.find(item => item.id === 'portunus-pelagicus');
   const query = search.trim().toLowerCase();
   const results = species.filter(item => [item.english_name, item.scientific_name, ...item.names.map(name => name.name)]
@@ -292,12 +299,8 @@ function Atlas({species, search, setSearch, onOpen}: {
       <div className="atlas-intro">
         <img className="atlas-mascot" src="/shellfie-mascot.webp" alt="" width="768" height="768"/>
         <h1>Crabs of the <em>Philippines</em></h1>
-        <p>Browse species and compare crab photos with the model’s suggestions.</p>
-        <label className="atlas-search"><Search size={22} aria-hidden="true"/>
-          <input type="search" aria-label="Search species" placeholder="Search by crab name" value={search}
-            onChange={event => setSearch(event.target.value)}/>
-        </label>
-        <a href={identify} className="atlas-action atlas-cta"><Camera size={19}/> Identify a photo <ArrowRight size={17}/></a>
+        <p>Take or upload a photo to find possible matches.</p>
+        <PhotoPicker {...picker} compact/>
       </div>
       {featured && <div className="atlas-feature">
         <a href={speciesLink(featured.id)} onClick={onOpen} className="atlas-feature-image" aria-label={'Open ' + featured.english_name}>
@@ -311,9 +314,16 @@ function Atlas({species, search, setSearch, onOpen}: {
       </div>}
     </section>
     <section className="atlas-index" aria-labelledby="index-heading">
-      <div className="atlas-index-heading"><h2 id="index-heading">Species index</h2>
-        <output>{results.length} species</output></div>
-      {results.length ? <div className="atlas-grid">{results.map(item => <article className="atlas-card" key={item.id}>
+      <div className="atlas-index-heading">
+        <div className="atlas-index-title"><h2 id="index-heading">Species index</h2>
+          {catalog.status === 'ready' && <output>{results.length} species</output>}</div>
+        <label className="atlas-search"><Search size={22} aria-hidden="true"/>
+          <input type="search" aria-label="Search species" placeholder="Search by crab name" value={search}
+            onChange={event => setSearch(event.target.value)}/>
+        </label>
+      </div>
+      {catalog.status !== 'ready' ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/> :
+        results.length ? <div className="atlas-grid">{results.map(item => <article className="atlas-card" key={item.id}>
         <a href={speciesLink(item.id)} onClick={onOpen} aria-label={`View ${item.english_name}`}>
           <SpeciesPhoto species={item}/>
           <div className="atlas-card-title"><div><h3>{item.english_name}</h3><i>{item.scientific_name}</i></div><ArrowRight size={20}/></div>
@@ -324,10 +334,13 @@ function Atlas({species, search, setSearch, onOpen}: {
   </>;
 }
 
-function Capture({photo, preview, stage, error, model, retryModel, lastResult, onFile, onSubmit}: {
+type PhotoPickerProps = {
   photo?: PhotoSelection; preview: string; stage?: PhotoStage; error: string; model: Resource<Model>;
-  retryModel: () => void; lastResult?: Prediction; onFile: (file: File) => void; onSubmit: () => void;
-}) {
+  retryModel: () => void; onFile: (file: File) => void; onSubmit: () => void;
+};
+
+function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, onSubmit, compact = false}:
+  PhotoPickerProps & {compact?: boolean}) {
   const library = useRef<HTMLInputElement>(null);
   const camera = useRef<HTMLInputElement>(null);
   const stages = {preparing: 'Preparing photo…', uploading: 'Uploading photo…', analyzing: 'Comparing species…'};
@@ -336,42 +349,58 @@ function Capture({photo, preview, stage, error, model, retryModel, lastResult, o
     input.value = '';
   }
 
+  return <div className={compact ? 'capture-panel hero-capture' : 'capture-panel'} role="group" aria-label="Identify a crab photo"
+    onDragOver={event => event.preventDefault()} onDrop={event => {
+      event.preventDefault();
+      if (!stage && event.dataTransfer.files[0]) onFile(event.dataTransfer.files[0]);
+    }}>
+    <input ref={library} type="file" accept="image/jpeg,image/png,image/webp" hidden
+      aria-label="Choose crab photograph" onChange={event => select(event.currentTarget)}/>
+    <input ref={camera} type="file" accept="image/*" capture="environment" hidden
+      aria-label="Take crab photograph" onChange={event => select(event.currentTarget)}/>
+    {photo && <figure className="capture-preview"><img src={preview || undefined} alt={photo.example ? 'Selected example crab' : 'Your selected crab photograph'}/>
+      {photo.example && <figcaption><strong>Example photo</strong> · {photo.example.english_name}<br/><PhotoCredit species={photo.example}/></figcaption>}
+    </figure>}
+    <div className="capture-buttons">
+      {photo && <button className="primary capture-submit" disabled={!!stage || model.status !== 'ready'} onClick={onSubmit}>
+        Identify crab <ArrowRight size={18}/>
+      </button>}
+      <button className={photo ? 'secondary' : 'primary'} disabled={!!stage} onClick={() => camera.current?.click()}>
+        <Camera size={19}/>{photo ? 'Retake photo' : 'Take a photo'}
+      </button>
+      <button className="secondary" disabled={!!stage} onClick={() => library.current?.click()}>
+        <ImagePlus size={19}/>{photo ? 'Change photo' : 'Upload photo'}
+      </button>
+    </div>
+    {stage && <p className="capture-status" role="status"><LoaderCircle className="spin" size={18}/>{stages[stage]}</p>}
+    {error && <p className="capture-error" role="alert">{error}</p>}
+    {compact && photo && <CaptureModelStatus model={model} retryModel={retryModel}/>}
+    {!photo && <p className="capture-format">
+      {compact ? 'JPG, PNG or WebP · Up to 10 MiB' : 'You can also drop a JPG, PNG or WebP here. Maximum 10 MiB.'}
+    </p>}
+    <p className="capture-privacy"><ShieldCheck size={17}/>{compact
+      ? 'Private photos expire after 24 hours.'
+      : 'Photos are private and expire after 24 hours. Never used for training.'}</p>
+  </div>;
+}
+
+function CaptureModelStatus({model, retryModel}: Pick<PhotoPickerProps, 'model' | 'retryModel'>) {
+  if (model.status === 'failed') return <LoadState state={model} label="" retry={retryModel}/>;
+  if (model.status === 'loading') return <p role="status">Checking the identification model…</p>;
+  if (!model.data.available) return <p>The identification model is unavailable.</p>;
+  return null;
+}
+
+function Capture({picker, lastResult}: {picker: PhotoPickerProps; lastResult?: Prediction}) {
   return <section className="shell-page">
     <h1>Identify a crab</h1>
     <p className="shell-lead">Choose a clear photo with the shell, claws and legs in view.</p>
     <div className="capture-layout">
-      <div className="capture-panel" onDragOver={event => event.preventDefault()} onDrop={event => {
-        event.preventDefault();
-        if (!stage && event.dataTransfer.files[0]) onFile(event.dataTransfer.files[0]);
-      }}>
-        <input ref={library} type="file" accept="image/jpeg,image/png,image/webp" hidden
-          aria-label="Choose crab photograph" onChange={event => select(event.currentTarget)}/>
-        <input ref={camera} type="file" accept="image/*" capture="environment" hidden
-          aria-label="Take crab photograph" onChange={event => select(event.currentTarget)}/>
-        {!photo && <div className="capture-buttons">
-          <button className="primary" disabled={!!stage} onClick={() => camera.current?.click()}><Camera size={19}/> Take a photo</button>
-          <button className="secondary" disabled={!!stage} onClick={() => library.current?.click()}><ImagePlus size={19}/> Choose from library</button>
-        </div>}
-        {photo && <>
-          <figure className="capture-preview"><img src={preview || undefined} alt={photo.example ? 'Selected example crab' : 'Your selected crab photograph'}/>
-            {photo.example && <figcaption><strong>Example photo</strong> · {photo.example.english_name}<br/><PhotoCredit species={photo.example}/></figcaption>}
-          </figure>
-          <div className="capture-buttons">
-            <button className="primary" disabled={!!stage || model.status !== 'ready'} onClick={onSubmit}>Identify crab <ArrowRight size={18}/></button>
-            <button className="secondary" disabled={!!stage} onClick={() => library.current?.click()}><ImagePlus size={18}/> Change photo</button>
-          </div>
-        </>}
-        {stage && <p className="capture-status" role="status"><LoaderCircle className="spin" size={18}/>{stages[stage]}</p>}
-        {error && <p className="capture-error" role="alert">{error}</p>}
-        {!photo && <p className="capture-format">You can also drop a JPG, PNG or WebP here. Maximum 10 MiB.</p>}
-        <p className="capture-privacy"><ShieldCheck size={17}/> Photos are private and expire after 24 hours. Never used for training.</p>
-      </div>
+      <PhotoPicker {...picker}/>
       <aside className="capture-aside">
         <h2>Before you submit</h2>
         <p>Keep your distance, use even light and leave room around the whole crab.</p>
-        {model.status === 'failed' && <LoadState state={model} label="" retry={retryModel}/>}
-        {model.status === 'loading' && <p role="status">Checking the identification model…</p>}
-        {model.status === 'ready' && !model.data.available && <p>The identification model is unavailable.</p>}
+        <CaptureModelStatus model={picker.model} retryModel={picker.retryModel}/>
         <a href={guide}>Browse the field guide <ArrowRight size={16}/></a>
         {lastResult && <a href={observationLink(lastResult.id)}>View last result <ArrowRight size={16}/></a>}
       </aside>

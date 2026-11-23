@@ -62,6 +62,28 @@ describe('Shellfie classroom demo', () => {
     expect(screen.getByRole('link', {name: 'View Three-spot swimming crab'})).toBeInTheDocument();
   });
 
+  it('opens the camera and upload pickers from the hero and submits a photo from the same page', async () => {
+    render(<App/>);
+    const picker = within(screen.getByRole('group', {name: 'Identify a crab photo'}));
+    const camera = picker.getByLabelText('Take crab photograph');
+    const library = picker.getByLabelText('Choose crab photograph');
+    const openCamera = vi.spyOn(camera, 'click');
+    const openLibrary = vi.spyOn(library, 'click');
+    fireEvent.click(picker.getByRole('button', {name: 'Take a photo'}));
+    expect(openCamera).toHaveBeenCalledOnce();
+    expect(camera).toHaveAttribute('capture', 'environment');
+    fireEvent.click(picker.getByRole('button', {name: 'Upload photo'}));
+    expect(openLibrary).toHaveBeenCalledOnce();
+    fireEvent.change(library, {target: {files: [new File(['photo'], 'crab.jpg', {type: 'image/jpeg'})]}});
+    expect(await picker.findByRole('img', {name: 'Your selected crab photograph'})).toBeInTheDocument();
+    expect(location.hash).toBe('');
+    const identify = picker.getByRole('button', {name: 'Identify crab'});
+    await waitFor(() => expect(identify).toBeEnabled());
+    fireEvent.click(identify);
+    expect(await screen.findByRole('heading', {name: 'Match uncertain'})).toBeInTheDocument();
+    expect(location.hash).toBe('#/observations/prediction-id');
+  });
+
   it('submits a credited example and restores the chosen comparison after visiting a species', async () => {
     render(<App/>);
     fireEvent.click(await screen.findByRole('link', {name: 'Open Blue swimming crab'}));
