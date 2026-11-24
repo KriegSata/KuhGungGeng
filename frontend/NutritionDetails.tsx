@@ -9,7 +9,7 @@ const featuredNutrients = [
 
 export default function NutritionDetails({species, standalone = false}: {species: Species; standalone?: boolean}) {
   const nutrition = species.nutrition;
-  const Title = standalone ? 'h2' : 'h4';
+  const Title = standalone ? 'h2' : 'h3';
   const unavailable = {
     toxic: 'Do not eat this toxic species.',
     diet_related_risk_reported: 'Poisoning has been reported for this species.',

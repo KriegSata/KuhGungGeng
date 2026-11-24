@@ -1,6 +1,7 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
-import type {CSSProperties, KeyboardEvent} from 'react';
-import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronLeft, Focus, Globe2, History, ImagePlus, Lightbulb, Link2, LoaderCircle, MapPin, NotebookText, Ruler, Search, ShieldAlert, ShieldCheck, Sun, Trash2, Utensils, X} from 'lucide-react';
+import type {CSSProperties, KeyboardEvent, ReactNode} from 'react';
+import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, Focus, Globe2, History, ImagePlus, Info, Lightbulb, Link2, LoaderCircle, MapPin, Maximize, MessageSquare, NotebookText, Ruler, Search, ShieldAlert, ShieldCheck, Sun, Trash2, Utensils, X} from 'lucide-react';
+import type {LucideIcon} from 'lucide-react';
 import {animate} from 'animejs/animation';
 import {stagger} from 'animejs/utils';
 import {api, ApiError, startSession, validateFile} from './api';
@@ -16,6 +17,15 @@ const observations = '#/observations';
 const speciesLink = (id: string) => guide + '/' + encodeURIComponent(id);
 const observationLink = (id: string) => observations + '/' + encodeURIComponent(id);
 const words = (value: string) => value.replaceAll('_', ' ');
+
+const habitatFilters = [
+  {label: 'Beach', pattern: /\bbeach(?:es)?\b/i},
+  {label: 'Mangrove', pattern: /\bmangroves?\b/i},
+  {label: 'Reef', pattern: /\breefs?\b/i},
+  {label: 'Rocky shore', pattern: /\brocky (?:intertidal )?shores?\b/i},
+  {label: 'Coastal & offshore', pattern: /\b(?:coastal (?:bottoms|seabeds|waters)|offshore|intertidal zone)\b/i},
+] as const;
+type Habitat = typeof habitatFilters[number]['label'];
 
 type Resource<T> = {status: 'loading'} | {status: 'ready'; data: T} | {status: 'failed'; message: string};
 type Model = {available: boolean; version?: string; species_ids?: string[]};
@@ -108,7 +118,7 @@ function resultTitle(prediction: Prediction) {
 function resultMessage(prediction: Prediction) {
   switch (prediction.reason) {
     case 'model_unavailable': return 'The identification model is unavailable. Browse the field guide to compare species.';
-    case 'poor_image_quality': return 'Try a sharper photo in even light, with the whole crab in view.';
+    case 'poor_image_quality': return 'Photo quality made it harder to compare species.';
     case 'ambiguous_species': return 'The model could not settle on one species.';
     case null: return 'Look at the same part of both crabs and compare what you can see.';
     default: return 'The model needs more information. Try another view of the crab.';
@@ -137,27 +147,12 @@ async function photoDimensions(file: File) {
   }
 }
 
-export default function App() {
-  const {route, main} = useRoute();
-  const [catalog, retryCatalog] = useResource<{items: Species[]}>('/species');
-  const [model, retryModel] = useResource<Model>('/model');
-  const [search, setSearch] = useState('');
+function usePhotoIdentification(onIdentified: (prediction: Prediction) => void) {
   const [photo, setPhoto] = useState<PhotoSelection>();
   const [preview, setPreview] = useState('');
   const [stage, setStage] = useState<PhotoStage>();
   const [photoError, setPhotoError] = useState('');
-  const [reviewError, setReviewError] = useState('');
-  const [lastResult, setLastResult] = useState<Prediction>();
-  const [returnTo, setReturnTo] = useState<{speciesId: string; observation: string}>();
-  const [candidates, setCandidates] = useState<Record<string, string>>({});
   const activity = useRef(false);
-  const species = catalog.status === 'ready' ? catalog.data.items : [];
-  const speciesId = route.startsWith(guide + '/') ? route.slice(guide.length + 1) : '';
-  const selected = species.find(item => encodeURIComponent(item.id) === speciesId);
-  const predictionId = route.startsWith(observations + '/') ? route.slice(observations.length + 1) : '';
-  const guideActive = route === guide || !!speciesId;
-  const observationsActive = route === observations || !!predictionId;
-  const inReview = route === '#/review';
 
   useEffect(() => {
     if (!photo?.file) { setPreview(''); return; }
@@ -204,8 +199,10 @@ export default function App() {
       }
       setStage('analyzing');
       const prediction = await api<Prediction>('/predictions', {method: 'POST', body: JSON.stringify({upload_id: uploadId, top_k: 3})});
-      setLastResult(prediction);
-      if (currentRoute() === sourceRoute) location.hash = observationLink(prediction.id);
+      if (currentRoute() === sourceRoute) {
+        onIdentified(prediction);
+        location.hash = observationLink(prediction.id);
+      }
     } catch (error) {
       if (error instanceof ApiError && error.status === 410) setPhoto({...photo, uploadId: undefined});
       setPhotoError((error as Error).message);
@@ -215,11 +212,36 @@ export default function App() {
     }
   }
 
-  const picker = {
-    photo, preview, stage, error: photoError, model, retryModel,
+  return {
+    photo, preview, stage, error: photoError,
     onFile: (file: File) => void preparePhoto(file),
+    onRemove: () => {
+      if (activity.current) return;
+      setPhoto(undefined);
+      setPhotoError('');
+    },
     onSubmit: () => void submitPhoto(),
   };
+}
+
+export default function App() {
+  const {route, main} = useRoute();
+  const [catalog, retryCatalog] = useResource<{items: Species[]}>('/species');
+  const [model, retryModel] = useResource<Model>('/model');
+  const [search, setSearch] = useState('');
+  const [habitat, setHabitat] = useState<Habitat | null>(null);
+  const [reviewError, setReviewError] = useState('');
+  const [lastResult, setLastResult] = useState<Prediction>();
+  const [returnTo, setReturnTo] = useState<{speciesId: string; observation: string}>();
+  const [candidates, setCandidates] = useState<Record<string, string>>({});
+  const picker = {...usePhotoIdentification(setLastResult), model, retryModel};
+  const species = catalog.status === 'ready' ? catalog.data.items : [];
+  const speciesId = route.startsWith(guide + '/') ? route.slice(guide.length + 1) : '';
+  const selected = species.find(item => encodeURIComponent(item.id) === speciesId);
+  const predictionId = route.startsWith(observations + '/') ? route.slice(observations.length + 1) : '';
+  const guideActive = route === guide || !!speciesId;
+  const observationsActive = route === observations || !!predictionId;
+  const inReview = route === '#/review';
 
   return <>
     <a className="skip" href="#main" onClick={event => {event.preventDefault(); main.current?.focus();}}>Skip to content</a>
@@ -235,7 +257,7 @@ export default function App() {
     </header>
     <main id="main" ref={main} tabIndex={-1} className="shell-main">
       {route === guide && <Atlas catalog={catalog} retryCatalog={retryCatalog} picker={picker}
-        search={search} setSearch={setSearch} onOpen={() => setReturnTo(undefined)}/>}
+        search={search} setSearch={setSearch} habitat={habitat} setHabitat={setHabitat} onOpen={() => setReturnTo(undefined)}/>}
       {speciesId && (catalog.status !== 'ready'
         ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/>
         : selected
@@ -247,7 +269,7 @@ export default function App() {
         if (lastResult?.id === id) setLastResult(undefined);
       }}/>}
       {predictionId && <ObservationPage key={predictionId} id={predictionId} species={species}
-        model={model.status === 'ready' ? model.data : undefined}
+        model={model} retryModel={retryModel} onIdentified={setLastResult}
         prediction={encodeURIComponent(lastResult?.id ?? '') === predictionId ? lastResult : undefined}
         candidateId={candidates[predictionId]}
         onSelect={id => setCandidates(previous => ({...previous, [predictionId]: id}))}
@@ -271,15 +293,18 @@ function BrandLink() {
   </a>;
 }
 
-function Atlas({catalog, retryCatalog, picker, search, setSearch, onOpen}: {
+function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHabitat, onOpen}: {
   catalog: Resource<{items: Species[]}>; retryCatalog: () => void; picker: PhotoPickerProps;
-  search: string; setSearch: (search: string) => void; onOpen: () => void;
+  search: string; setSearch: (search: string) => void; habitat: Habitat | null; setHabitat: (habitat: Habitat | null) => void;
+  onOpen: () => void;
 }) {
+  const searchInput = useRef<HTMLInputElement>(null);
   const species = catalog.status === 'ready' ? catalog.data.items : [];
   const featured = species.find(item => item.id === 'portunus-pelagicus');
   const query = search.trim().toLowerCase();
-  const results = species.filter(item => [item.english_name, item.scientific_name, ...item.names.map(name => name.name)]
-    .join(' ').toLowerCase().includes(query));
+  const habitatPattern = habitatFilters.find(filter => filter.label === habitat)?.pattern;
+  const results = species.filter(item => (!habitatPattern || habitatPattern.test(item.habitat ?? '')) &&
+    [item.english_name, item.scientific_name, ...item.names.map(name => name.name)].join(' ').toLowerCase().includes(query));
   const speciesGrid = useScrollReveal(results.map(item => item.id).join(','));
 
   return <>
@@ -302,13 +327,23 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, onOpen}: {
       </div>}
     </section>
     <section className="atlas-index" aria-labelledby="index-heading">
-      <div className="atlas-index-heading">
-        <div className="atlas-index-title"><h2 id="index-heading">Species index</h2>
-          {catalog.status === 'ready' && <output>{results.length} species</output>}</div>
-        <label className="atlas-search"><Search size={22} aria-hidden="true"/>
-          <input type="search" aria-label="Search species" placeholder="Search by crab name" value={search}
-            onChange={event => setSearch(event.target.value)}/>
-        </label>
+      <div className="atlas-index-controls">
+        <div className="atlas-index-heading">
+          <div className="atlas-index-title"><h2 id="index-heading">Species index</h2>
+            {catalog.status === 'ready' && <output>{results.length} species</output>}</div>
+          <label className="atlas-search"><Search size={22} aria-hidden="true"/>
+            <input ref={searchInput} type="search" aria-label="Search species" placeholder="Search by crab name" value={search}
+              onChange={event => setSearch(event.target.value)}/>
+          </label>
+        </div>
+        {catalog.status === 'ready' && <div className="atlas-habitats" role="group" aria-label="Filter by habitat">
+          <span className="atlas-habitats-label" aria-hidden="true">Habitat</span>
+          <div className="atlas-habitat-options">
+            <button type="button" aria-pressed={habitat === null} onClick={() => setHabitat(null)}>All habitats</button>
+            {habitatFilters.map(({label}) => <button key={label} type="button" aria-pressed={habitat === label}
+              onClick={() => setHabitat(label)}>{label}</button>)}
+          </div>
+        </div>}
       </div>
       {catalog.status !== 'ready' ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/> :
         results.length ? <div className="atlas-grid" ref={speciesGrid}>{results.map(item => <article className="atlas-card" key={item.id}>
@@ -325,18 +360,24 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, onOpen}: {
           <div className="atlas-card-title"><div><h3>{item.english_name}</h3><i>{item.scientific_name}</i></div><ArrowRight size={20}/></div>
         </a>
         <div className="atlas-card-credit"><PhotoCredit species={item}/></div>
-      </article>)}</div> : <p>No species found. Try another name.</p>}
+      </article>)}</div> : <div className="atlas-empty">
+        <p>{query || habitat ? 'No species match these filters.' : 'No species are available.'}</p>
+        {(query || habitat) && <button type="button" className="secondary" onClick={() => {
+          setSearch('');
+          setHabitat(null);
+          searchInput.current?.focus({preventScroll: true});
+        }}>Clear filters</button>}
+      </div>}
     </section>
   </>;
 }
 
-type PhotoPickerProps = {
-  photo?: PhotoSelection; preview: string; stage?: PhotoStage; error: string; model: Resource<Model>;
-  retryModel: () => void; onFile: (file: File) => void; onSubmit: () => void;
-};
+type PhotoPickerProps = ReturnType<typeof usePhotoIdentification> & {model: Resource<Model>; retryModel: () => void};
 
-function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, onSubmit}: PhotoPickerProps) {
+function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, onRemove, onSubmit, retake = false}: PhotoPickerProps & {retake?: boolean}) {
   const library = useRef<HTMLInputElement>(null);
+  const uploadButton = useRef<HTMLButtonElement>(null);
+  const cameraButton = useRef<HTMLButtonElement>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const stages = {preparing: 'Preparing photo…', uploading: 'Uploading photo…', analyzing: 'Comparing species…'};
   function select(input: HTMLInputElement) {
@@ -344,7 +385,7 @@ function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, o
     input.value = '';
   }
 
-  return <div className="hero-capture" role="group" aria-label="Identify a crab photo"
+  return <div className={retake ? 'result-retake' : 'hero-capture'} role="group" aria-label={retake ? 'Retake a crab photo' : 'Identify a crab photo'}
     onDragOver={event => event.preventDefault()} onDrop={event => {
       event.preventDefault();
       if (!stage && event.dataTransfer.files[0]) onFile(event.dataTransfer.files[0]);
@@ -353,25 +394,29 @@ function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, o
       aria-label="Choose crab photograph" onChange={event => select(event.currentTarget)}/>
     {photo && <figure className="capture-preview">
       <img src={preview || undefined} alt="Your selected crab photograph"/>
+      <button type="button" className="capture-remove" aria-label="Remove photo" disabled={!!stage} onClick={() => {
+        onRemove();
+        (retake ? cameraButton : uploadButton).current?.focus({preventScroll: true});
+      }}><X size={17} aria-hidden="true"/></button>
     </figure>}
     <div className="capture-buttons">
       {photo && <button className="primary capture-submit" disabled={!!stage || model.status !== 'ready'} onClick={onSubmit}>
         Identify crab <ArrowRight size={18}/>
       </button>}
-      <button className={photo ? 'secondary' : 'primary'} disabled={!!stage} onClick={() => setCameraOpen(true)}>
-        <Camera size={19}/>{photo ? 'Retake photo' : 'Take a photo'}
+      <button ref={cameraButton} className={photo ? 'secondary' : 'primary'} disabled={!!stage} onClick={() => setCameraOpen(true)}>
+        <Camera size={19}/>{retake || photo ? 'Retake photo' : 'Take a photo'}
       </button>
-      <button className="secondary" disabled={!!stage} onClick={() => library.current?.click()}>
+      {(!retake || photo) && <button ref={uploadButton} className="secondary" disabled={!!stage} onClick={() => library.current?.click()}>
         <ImagePlus size={19}/>{photo ? 'Change photo' : 'Upload photo'}
-      </button>
+      </button>}
     </div>
     {stage && <p className="capture-status" role="status"><LoaderCircle className="spin" size={18}/>{stages[stage]}</p>}
     {error && <p className="capture-error" role="alert">{error}</p>}
     {photo && <CaptureModelStatus model={model} retryModel={retryModel}/>}
-    <div className="hero-capture-notes">
+    {!retake && <div className="hero-capture-notes">
       {!photo && <span>JPG, PNG, WebP · 10 MiB max</span>}
       <span><ShieldCheck size={14} aria-hidden="true"/> Private · Expires in 24 hours</span>
-    </div>
+    </div>}
     {cameraOpen && <CameraCapture onClose={() => setCameraOpen(false)} onPhoto={onFile} onUpload={() => library.current?.click()}/>}
   </div>;
 }
@@ -629,52 +674,130 @@ function SpeciesSourceLinks({sources, empty}: {sources: Source[]; empty: string}
   </li>)}</ul> : <p>{empty}</p>;
 }
 
+const observationPhotoUrl = (id: string) => `/api/uploads/${encodeURIComponent(id)}/image`;
+const observationPhotoExpired = (prediction: Prediction) => Date.now() >= (prediction.created_at + 86_400) * 1000;
+
 function ObservationPhoto({prediction, alt, lazy = false}: {prediction: Prediction; alt: string; lazy?: boolean}) {
   const [failed, setFailed] = useState(false);
-  const expired = Date.now() >= (prediction.created_at + 86_400) * 1000;
+  const expired = observationPhotoExpired(prediction);
   if (failed || expired) return <div className="photo-unavailable">{expired ? 'Photo expired' : 'Photo unavailable'}</div>;
-  return <img src={`/api/uploads/${encodeURIComponent(prediction.upload_id)}/image`} alt={alt}
+  return <img src={observationPhotoUrl(prediction.upload_id)} alt={alt}
     loading={lazy ? 'lazy' : undefined} onError={() => setFailed(true)}/>;
 }
 
-function ObservationPage({id, prediction, species, model, candidateId, onSelect, onSpecies}: {
-  id: string; prediction?: Prediction; species: Species[]; model?: Model; candidateId?: string;
-  onSelect: (id: string) => void; onSpecies: (id: string) => void;
+function ComparisonPhoto({label, src, alt, unavailable}: {
+  label: string; src?: string; alt: string; unavailable: string;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const [failed, setFailed] = useState(false);
+  const [enlarged, setEnlarged] = useState(false);
+  const available = src && !failed;
+
+  return <>
+    <h3>{label}</h3>
+    <div className="comparison-frame">
+      {available ? <>
+        <img src={src} alt={alt} onError={() => setFailed(true)}/>
+        <button type="button" className="comparison-expand" aria-label={`Enlarge ${label.toLowerCase()}`}
+          onClick={() => {
+            dialog.current?.showModal();
+            closeButton.current?.focus();
+            setEnlarged(true);
+          }}><Maximize size={19} aria-hidden="true"/></button>
+      </> : <p className="photo-unavailable">{unavailable}</p>}
+    </div>
+    <dialog ref={dialog} className="comparison-dialog" aria-label={`Enlarged ${label.toLowerCase()}`}
+      onClose={() => setEnlarged(false)}>
+      <header>
+        <strong>{label}</strong>
+        <button type="button" ref={closeButton} className="comparison-dialog-close" aria-label="Close enlarged photo"
+          onClick={() => dialog.current?.close()}><X size={21} aria-hidden="true"/></button>
+      </header>
+      {enlarged && (available ? <img src={src} alt={alt} onError={() => setFailed(true)}/>
+        : <p className="photo-unavailable">{unavailable}</p>)}
+    </dialog>
+  </>;
+}
+
+const photoAngleLabels: Record<string, string> = {
+  dorsal: 'From above',
+  side: 'Side view',
+  claw: 'Claws',
+  legs: 'Legs',
+  carapace: 'Shell',
+  ventral_if_safely_visible: 'Underside, if safely visible',
+};
+
+function uncertainPhotoTip(result: Prediction) {
+  if (result.status === 'identified' || result.reason === 'model_unavailable') return;
+  const warnings = result.quality_warnings;
+  if (warnings.includes('possible_blur_or_low_detail')) {
+    return {title: 'The photo may be blurry', text: 'Steady your camera and tap the shell to focus. Keep the claws and legs in view.', retake: true};
+  }
+  if (warnings.includes('underexposed') || warnings.includes('overexposed')) {
+    return {title: 'Try softer, even light', text: 'Choose an angle where you can see the shell markings clearly, without glare or deep shadow.'};
+  }
+  if (warnings.includes('low_resolution')) {
+    return {title: 'Use a higher-resolution photo', text: 'Use the original photo so small details on the shell and claws stay visible.'};
+  }
+  if (result.candidates.length) {
+    return {title: 'Check another angle', text: 'Use the clue below the photos. If the feature is hidden, photograph the crab from another angle while keeping your distance.'};
+  }
+  return {title: 'Frame the whole crab', text: 'Try a clear photo from above, with the shell, claws, and legs in view.'};
+}
+
+function ObservationPage({id, prediction, species, model, retryModel, candidateId, onSelect, onSpecies, onIdentified}: {
+  id: string; prediction?: Prediction; species: Species[]; model: Resource<Model>; retryModel: () => void; candidateId?: string;
+  onSelect: (id: string) => void; onSpecies: (id: string) => void; onIdentified: (prediction: Prediction) => void;
 }) {
   const [record, retry] = useResource<Prediction>(prediction ? null : '/predictions/' + id, true);
   const result = prediction ?? (record.status === 'ready' ? record.data : undefined);
   const [view, setView] = useState<'input' | 'reference'>(candidateId ? 'reference' : 'input');
+  const retakePicker = usePhotoIdentification(onIdentified);
   if (!result) return <LoadState state={record} label="Loading the observation…" retry={retry}/>;
   const example = species.find(item => item.id === exampleFor(result.id));
   const candidate = result.candidates.find(item => item.species_id === candidateId) ?? result.candidates[0];
   const reference = candidate && species.find(item => item.id === candidate.species_id);
-  const acceptedSpecies = result.status === 'identified' ? species.find(item => item.id === result.candidates[0]?.species_id) : undefined;
-  const coverage = model?.version === result.model_version ? model?.species_ids?.length : undefined;
+  const overviewSpecies = result.status === 'identified' ? reference : undefined;
+  const coverage = model.status === 'ready' && model.data.version === result.model_version ? model.data.species_ids?.length : undefined;
   const inputLabel = example ? 'Example photo' : 'Your photo';
+  const expired = observationPhotoExpired(result);
+  const referenceImage = reference && referencePhoto(reference.id);
+  const trait = reference?.diagnostic_traits?.[0] || 'Compare the shape of the shell, claws, and legs you can see in both photos.';
+  const photoTip = uncertainPhotoTip(result);
 
   return <article className="shell-page observation-page">
     <a className="back-link" href={observations}><ChevronLeft size={18}/> My observations</a>
     <h1>{resultTitle(result)}</h1>
     <p className="shell-lead">{resultMessage(result)}</p>
     {result.experimental && <p className="model-summary">Experimental model{coverage ? ` · Compares ${coverage} species` : ''}</p>}
+    {photoTip && <section className="result-photo-tip" aria-labelledby="result-photo-tip-heading">
+      <span className="result-photo-tip-icon"><Lightbulb size={21} aria-hidden="true"/></span>
+      <div>
+        <h2 id="result-photo-tip-heading">{photoTip.title}</h2>
+        <p>{photoTip.text}</p>
+      </div>
+      {photoTip.retake && <PhotoPicker {...retakePicker} model={model} retryModel={retryModel} retake/>}
+    </section>}
     {candidate && <section className="comparison" aria-labelledby="comparison-heading">
       <div className="match-panel">
-        <h2 id="comparison-heading">Possible matches</h2>
-        <p id="match-score-note">Model scores · Select a species to compare photos.</p>
+        <div className="match-panel-heading">
+          <h2 id="comparison-heading">Possible matches</h2>
+          <p id="match-score-note">Model scores<span className="visually-hidden">. Select a species to compare photos.</span></p>
+        </div>
         <div className="comparison-candidates" role="group" aria-label="Model suggestions" aria-describedby="match-score-note">
-          {result.candidates.map((item, index) => {
+          {result.candidates.map(item => {
             const entry = species.find(crab => crab.id === item.species_id);
             const name = item.english_name || entry?.english_name || item.scientific_name;
             const score = Math.round(item.confidence * 100);
             return <button className="match-candidate" key={item.species_id} type="button"
               aria-pressed={candidate.species_id === item.species_id}
               onClick={() => {onSelect(item.species_id); setView('reference');}}>
-              <span className="match-rank"><span className="visually-hidden">Rank </span>{index + 1}</span>
-              <span className="match-score"><span className="visually-hidden">Model score </span>{score}%</span>
               <span className="match-species"><strong>{name}</strong>
                 {name !== item.scientific_name && <i>{item.scientific_name}</i>}
               </span>
-              <meter className="match-meter" min="0" max="100" value={score} aria-hidden="true"/>
+              <span className="match-score"><span className="visually-hidden">Model score </span>{score}%</span>
             </button>;
           })}
         </div>
@@ -684,44 +807,67 @@ function ObservationPage({id, prediction, species, model, candidateId, onSelect,
         <button type="button" aria-pressed={view === 'reference'} onClick={() => setView('reference')}>Reference photo</button>
       </div>
       <div className="comparison-grid" data-view={view}>
-        <section className="comparison-input"><h3>{inputLabel}</h3>
-          <figure><ObservationPhoto prediction={result} alt={inputLabel + ' submitted for identification'}/></figure>
-          {example && <p><strong>{example.english_name}</strong><br/><i>{example.scientific_name}</i><br/><PhotoCredit species={example}/></p>}
+        <section className="comparison-input">
+          <ComparisonPhoto key={result.upload_id} label={inputLabel}
+            src={expired ? undefined : observationPhotoUrl(result.upload_id)}
+            alt={example ? `${example.english_name} example photograph` : 'Crab photo submitted for identification'}
+            unavailable={expired ? 'Photo expired' : 'Photo unavailable'}/>
         </section>
-        <section className="comparison-reference"><h3>Reference photo</h3>
-          {reference ? <SpeciesPhoto key={reference.id} species={reference} large/> : <div className="photo-unavailable">Reference photo unavailable</div>}
-          <p><strong>{candidate.english_name || reference?.english_name || candidate.scientific_name}</strong><br/><i>{candidate.scientific_name}</i></p>
-          {reference && <a className="atlas-action" href={speciesLink(reference.id)} onClick={() => onSpecies(reference.id)}>
-            Open species entry <ArrowRight size={18}/>
-          </a>}
+        <section className="comparison-reference">
+          <ComparisonPhoto key={candidate.species_id} label="Reference photo" src={referenceImage?.src}
+            alt={`${candidate.scientific_name} reference photograph`} unavailable="Reference photo unavailable"/>
         </section>
       </div>
+      <div className="comparison-cue" aria-live="polite" aria-atomic="true">
+        <span className="comparison-cue-icon"><Focus size={23} aria-hidden="true"/></span>
+        <div><h3>Look for</h3><p>{trait}</p></div>
+      </div>
+      {(example || referenceImage || (reference && !overviewSpecies)) && <div className="comparison-footer">
+        {(example || referenceImage) && <div className="comparison-credits">
+          {example && <p>{inputLabel} · {example.english_name} · <PhotoCredit species={example}/></p>}
+          {referenceImage && reference && <p>Reference photo · <PhotoCredit species={reference}/></p>}
+        </div>}
+        {reference && !overviewSpecies && <a className="atlas-action" href={speciesLink(reference.id)} onClick={() => onSpecies(reference.id)}>
+          Open species profile <ArrowRight size={18} aria-hidden="true"/>
+        </a>}
+      </div>}
     </section>}
     {!candidate && <>
       <figure className="single-observation-photo"><figcaption>{inputLabel}</figcaption>
         <ObservationPhoto prediction={result} alt={inputLabel + ' submitted for identification'}/>
       </figure>
       <div className="result-actions">
-        <a className="primary" href={guide}>{result.reason === 'model_unavailable' ? 'Browse the field guide' : 'Try another photo'} <ArrowRight size={18}/></a>
+        {!photoTip?.retake && <a className="primary" href={guide}>{result.reason === 'model_unavailable' ? 'Browse the field guide' : 'Try another photo'} <ArrowRight size={18}/></a>}
         <a className="secondary" href={photoTips}>Photo tips</a>
       </div>
     </>}
-    {result.reason === 'poor_image_quality' && candidate && <a className="secondary" href={guide}>Try another photo</a>}
-    <p className="result-caution"><ShieldCheck size={20}/> A photo cannot confirm food safety.</p>
-    {acceptedSpecies && <SpeciesFacts species={acceptedSpecies} onMore={() => {
-      onSpecies(acceptedSpecies.id);
-      location.hash = speciesLink(acceptedSpecies.id);
-    }}/>}
-    <details className="observation-details"><summary>Model details and photo tips</summary>
-      <p>{result.confidence_explanation}</p>
-      {result.quality_warnings.length > 0 && <p>Photo checks · {result.quality_warnings.map(words).join(', ')}</p>}
-      <p>{result.photo_guidance}</p>
-      <ul>{result.suggested_photos.map(angle => <li key={angle}>{words(angle)}</li>)}</ul>
-      <p>{result.safety_disclaimer}</p>
-      <small>Model {result.model_version}</small>
-    </details>
-    <Correction species={species} prediction={result}/>
+    {result.reason === 'poor_image_quality' && candidate && !photoTip?.retake && <a className="secondary" href={guide}>Try another photo</a>}
+    <div className="observation-overview">
+      {overviewSpecies && <SpeciesFacts key={overviewSpecies.id} species={overviewSpecies} onMore={() => onSpecies(overviewSpecies.id)}/>}
+      <div className="observation-support">
+        {!overviewSpecies && <ObservationSafetyNote/>}
+        <ResultDisclosure label="Model details and photo tips" icon={Info}>
+          <h2>What the scores mean</h2>
+          <p>{result.confidence_explanation}</p>
+          {result.quality_warnings.length > 0 && <p className="photo-checks"><strong>Photo checks</strong> · {result.quality_warnings.map(words).join(', ')}</p>}
+          <h2>Photos to try</h2>
+          <p>{result.photo_guidance}</p>
+          {result.suggested_photos.length > 0 && <ul className="photo-angle-list">{result.suggested_photos.map(angle =>
+            <li key={angle}>{photoAngleLabels[angle] ?? words(angle)}</li>)}</ul>}
+          <p>{result.safety_disclaimer}</p>
+          <small>Model {result.model_version}</small>
+        </ResultDisclosure>
+        <Correction species={species} prediction={result}/>
+      </div>
+    </div>
   </article>;
+}
+
+function ResultDisclosure({label, icon: Icon, children}: {label: string; icon: LucideIcon; children: ReactNode}) {
+  return <details className="observation-details">
+    <summary><Icon size={19} aria-hidden="true"/>{label}<ChevronDown size={18} className="observation-chevron" aria-hidden="true"/></summary>
+    <div className="observation-details-body">{children}</div>
+  </details>;
 }
 
 function Correction({species, prediction}: {species: Species[]; prediction: Prediction}) {
@@ -743,7 +889,7 @@ function Correction({species, prediction}: {species: Species[]; prediction: Pred
     }
   }
 
-  return <details className="observation-details"><summary>Suggest a correction</summary>
+  return <ResultDisclosure label="Suggest a correction" icon={MessageSquare}>
     {state === 'sent' ? <p role="status"><Check size={16}/> Sent for review.</p> :
       <form onSubmit={event => {event.preventDefault(); void send(new FormData(event.currentTarget));}}>
         <label>Possible species<select name="species"><option value="">Unknown or another species</option>
@@ -753,7 +899,7 @@ function Correction({species, prediction}: {species: Species[]; prediction: Pred
         {message && <p role="alert">{message}</p>}
         <button className="primary" disabled={state === 'sending'}>{state === 'sending' ? 'Sending…' : 'Send for review'}</button>
       </form>}
-  </details>;
+  </ResultDisclosure>;
 }
 
 const observationDate = new Intl.DateTimeFormat(undefined, {
@@ -847,23 +993,58 @@ function ObservationHistory({species, onDelete}: {species: Species[]; onDelete: 
   </section>;
 }
 
-function SpeciesFacts({species:s,onMore}:{species:Species;onMore:()=>void}) {
-  const edibility=s.edibility==='reported_food_use' ? 'Reported food use' : s.edibility==='not_recommended' ? 'Do not eat' : s.edibility==='unknown' ? 'Not established' : words(s.edibility);
-  const poisonous=s.toxicity==='toxic' ? 'Known toxic species' : s.toxicity==='diet_related_risk_reported' ? 'Diet-related poisoning reported' : s.toxicity==='unknown' ? 'Not established' : words(s.toxicity);
-  return <section className="species-facts" aria-label="Identified species details">
-    <div className="eyebrow">ABOUT THIS SPECIES</div>
-    <div className="species-name-pair"><h3>{s.english_name}</h3><em>{s.scientific_name}</em></div>
-    {s.description && <p className="species-description">{s.description}</p>}
-    <dl className="facts-grid">
-      <div><dt>Edible?</dt><dd>{edibility}</dd></div>
-      <div className={s.toxicity==='toxic'||s.toxicity==='diet_related_risk_reported'?'facts-caution':undefined}><dt>Poisonous?</dt><dd>{poisonous}</dd></div>
-      <div><dt>Where to look</dt><dd>{s.habitat}</dd></div>
-      <div><dt>Where it occurs</dt><dd>{s.distribution}</dd></div>
-    </dl>
-    <NutritionDetails species={s}/>
-    <p className="facts-note">Species reference only. Edibility does not establish the safety of the photographed crab.</p>
-    <div className="facts-links"><button className="text-button" onClick={onMore}>Full species details <ArrowRight size={17}/></button>
-      {s.sources.length>0 && <details><summary>Sources</summary>{s.sources.map(source=><a key={source.id} href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a>)}</details>}
+function ObservationSafetyNote() {
+  return <p className="observation-safety-note"><ShieldCheck size={17} aria-hidden="true"/> A photo cannot confirm food safety.</p>;
+}
+
+function SpeciesFacts({species, onMore}: {species: Species; onMore: () => void}) {
+  const edibility = {
+    reported_food_use: 'Reported food use',
+    not_recommended: 'Do not eat',
+    unknown: 'Not established',
+  } as Record<string, string>;
+  const toxicity = {
+    toxic: 'Known toxic species',
+    diet_related_risk_reported: 'Diet-related poisoning reported',
+    unknown: 'Not established',
+  } as Record<string, string>;
+  const hasPoisoningWarning = species.toxicity === 'toxic' || species.toxicity === 'diet_related_risk_reported';
+  const facts = [
+    {label: 'Habitat', value: species.habitat, Icon: MapPin},
+    {label: 'Range', value: species.distribution, Icon: Globe2},
+    {label: 'Food use', value: edibility[species.edibility] ?? words(species.edibility), Icon: Utensils},
+    {label: 'Toxicity', value: toxicity[species.toxicity] ?? words(species.toxicity), Icon: ShieldAlert, caution: hasPoisoningWarning},
+  ];
+
+  return <section className="species-facts" aria-label="Selected species reference">
+    <header className="observation-facts-header">
+      <div>
+        <p className="observation-facts-label"><BookOpen size={16} aria-hidden="true"/> Selected reference</p>
+        <h2>{species.english_name}</h2>
+        <p className="observation-facts-latin">{species.scientific_name}</p>
+      </div>
+      <a className="secondary" href={speciesLink(species.id)} onClick={onMore}>
+        Full species profile <ArrowRight size={17} aria-hidden="true"/>
+      </a>
+    </header>
+    <div className="observation-facts-content">
+      {species.description && <p className="species-description">{species.description}</p>}
+      <dl className="facts-grid">
+        {facts.filter(({value}) => value).map(({label, value, Icon, caution}) => <div key={label} className={caution ? 'facts-caution' : undefined}>
+          <dt><span><Icon size={18} aria-hidden="true"/></span>{label}</dt><dd>{value}</dd>
+        </div>)}
+      </dl>
+      <ObservationSafetyNote/>
+      <div className="observation-facts-extras">
+        {species.nutrition && !hasPoisoningWarning ? <ResultDisclosure label="Nutrition reference" icon={Utensils}>
+          <NutritionDetails species={species}/>
+        </ResultDisclosure> : !hasPoisoningWarning && <p className="observation-nutrition-empty">
+          <Utensils size={19} aria-hidden="true"/> Species-specific nutrition data is unavailable.
+        </p>}
+        {species.sources.length > 0 && <ResultDisclosure label="Species sources" icon={Link2}>
+          <SpeciesSourceLinks sources={species.sources} empty="Reference links are pending."/>
+        </ResultDisclosure>}
+      </div>
     </div>
   </section>;
 }

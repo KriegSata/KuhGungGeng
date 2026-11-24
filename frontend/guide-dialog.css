@@ -2,10 +2,6 @@
 .candidate-names strong { font-size: 22px; font-weight: 600; }
 .candidate-names em { font-size: 20px; color: #5b7156; }
 .candidate > .candidate-score { font-size: 14px; }
-.species-name-pair { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 15px; margin-bottom: 20px; }
-.species-name-pair h3 { margin: 0; }
-.species-name-pair em { font-size: 19px; color: #5b7156; }
-.species-description { line-height: 1.7; max-width: 850px; }
 .nutrition-section {
   container-type: inline-size;
   margin-block: 24px;
@@ -13,9 +9,9 @@
   border-top: 1px solid var(--line);
   color: var(--ink);
 }
-.nutrition-section h4 { font-size: 23px; font-weight: 600; margin: 0 0 12px; }
+.nutrition-section h3 { font-size: 23px; font-weight: 600; margin: 0 0 12px; }
 .nutrition-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
-.nutrition-heading :is(h2, h4) { margin: 0; }
+.nutrition-heading :is(h2, h3) { margin: 0; }
 .nutrition-serving {
   display: flex;
   flex-wrap: wrap;

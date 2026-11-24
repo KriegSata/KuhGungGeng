@@ -8,10 +8,12 @@ const blue = {
   id: 'portunus-pelagicus', scientific_name: 'Portunus pelagicus', english_name: 'Blue swimming crab',
   names: [], sources: [] as Source[], edibility: 'reported_food_use', toxicity: 'unknown',
   habitat: 'Sandy beaches.', distribution: 'Indo-West Pacific.',
+  diagnostic_traits: ['Look for a long spine on either side of the shell.'],
 };
 const threeSpot = {
   ...blue, id: 'portunus-sanguinolentus', scientific_name: 'Portunus sanguinolentus',
   english_name: 'Three-spot swimming crab',
+  diagnostic_traits: ['Check for three wine-red spots across the back of the shell.'],
 };
 const result: Prediction = {
   id: 'prediction-id', upload_id: 'upload-id', status: 'insufficient_information', reason: 'ambiguous_species',
@@ -64,6 +66,41 @@ describe('Shellfie classroom demo', () => {
     fireEvent.change(screen.getByRole('searchbox', {name: 'Search species'}), {target: {value: 'sanguinolentus'}});
     expect(screen.queryByRole('link', {name: 'View Blue swimming crab'})).not.toBeInTheDocument();
     expect(screen.getByRole('link', {name: 'View Three-spot swimming crab'})).toBeInTheDocument();
+  });
+
+  it('combines habitat filters with name search and restores the filter after viewing a profile', async () => {
+    const ghost = {...blue, id: 'ocypode-ceratophthalma', english_name: 'Horn-eyed ghost crab',
+      scientific_name: 'Ocypode ceratophthalma', habitat: 'Burrows in sandy upper beaches.'};
+    const land = {...blue, id: 'cardisoma-carnifex', english_name: 'Mangrove land crab',
+      scientific_name: 'Cardisoma carnifex', habitat: 'Coastal burrows behind mangroves.'};
+    const reef = {...blue, id: 'atergatis-floridus', english_name: 'Floral egg crab',
+      scientific_name: 'Atergatis floridus', habitat: 'Shallow coral and rocky reefs.', toxicity: 'toxic'};
+    mockApi({catalog: [ghost, land, reef]});
+    render(<App/>);
+
+    const filters = within(await screen.findByRole('group', {name: 'Filter by habitat'}));
+    expect(filters.getByRole('button', {name: 'All habitats'})).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(filters.getByRole('button', {name: 'Beach'}));
+    expect(screen.getByRole('link', {name: 'View Horn-eyed ghost crab'})).toBeVisible();
+    expect(screen.queryByRole('link', {name: 'View Floral egg crab'})).not.toBeInTheDocument();
+    fireEvent.click(filters.getByRole('button', {name: 'Mangrove'}));
+    expect(screen.getByRole('link', {name: 'View Mangrove land crab'})).toBeVisible();
+    fireEvent.click(filters.getByRole('button', {name: 'Reef'}));
+    const search = screen.getByRole('searchbox', {name: 'Search species'});
+    fireEvent.change(search, {target: {value: 'Atergatis'}});
+    fireEvent.click(screen.getByRole('link', {name: 'View Floral egg crab'}));
+    fireEvent.click(await screen.findByRole('link', {name: 'Back to the field guide'}));
+
+    const restoredSearch = await screen.findByRole('searchbox', {name: 'Search species'});
+    expect(restoredSearch).toHaveValue('Atergatis');
+    expect(screen.getByRole('button', {name: 'Reef'})).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.change(restoredSearch, {target: {value: 'Ocypode'}});
+    expect(screen.getByRole('status')).toHaveTextContent('0 species');
+    expect(screen.getByText('No species match these filters.')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', {name: 'Clear filters'}));
+    expect(restoredSearch).toHaveValue('');
+    expect(restoredSearch).toHaveFocus();
+    expect(screen.getByRole('status')).toHaveTextContent('3 species');
   });
 
   it('shows the full toxic warning in Overview and keeps a reminder in Sources', async () => {
@@ -125,14 +162,21 @@ describe('Shellfie classroom demo', () => {
     expect(screen.queryByRole('dialog', {name: 'Take a crab photo'})).not.toBeInTheDocument();
   });
 
-  it('opens the upload picker and submits a photo from the homepage hero', async () => {
+  it('clears a selected photo and lets the user select and submit it again from the hero', async () => {
     render(<App/>);
     const picker = within(screen.getByRole('group', {name: 'Identify a crab photo'}));
     const library = picker.getByLabelText('Choose crab photograph');
     const openLibrary = vi.spyOn(library, 'click');
     fireEvent.click(picker.getByRole('button', {name: 'Upload photo'}));
     expect(openLibrary).toHaveBeenCalledOnce();
-    fireEvent.change(library, {target: {files: [new File(['photo'], 'crab.jpg', {type: 'image/jpeg'})]}});
+    const file = new File(['photo'], 'crab.jpg', {type: 'image/jpeg'});
+    fireEvent.change(library, {target: {files: [file]}});
+    expect(await picker.findByRole('img', {name: 'Your selected crab photograph'})).toBeInTheDocument();
+    fireEvent.click(picker.getByRole('button', {name: 'Remove photo'}));
+    expect(picker.queryByRole('img', {name: 'Your selected crab photograph'})).not.toBeInTheDocument();
+    expect(picker.queryByRole('button', {name: 'Identify crab'})).not.toBeInTheDocument();
+    expect(picker.getByRole('button', {name: 'Upload photo'})).toHaveFocus();
+    fireEvent.change(library, {target: {files: [file]}});
     expect(await picker.findByRole('img', {name: 'Your selected crab photograph'})).toBeInTheDocument();
     expect(location.hash).toBe('');
     const identify = picker.getByRole('button', {name: 'Identify crab'});
@@ -143,6 +187,7 @@ describe('Shellfie classroom demo', () => {
   });
 
   it('shows a saved example and restores the chosen comparison after visiting a species', async () => {
+    mockApi({prediction: {...result, status: 'identified', reason: null}});
     sessionStorage.setItem('shellfie:example:' + result.id, blue.id);
     history.replaceState(null, '', '/#/observations/' + result.id);
     render(<App/>);
@@ -151,11 +196,41 @@ describe('Shellfie classroom demo', () => {
     expect(matches.getByRole('button', {name: /Three-spot swimming crab/})).toHaveTextContent('58%');
     const candidate = matches.getByRole('button', {name: /Blue swimming crab/});
     expect(candidate).toHaveTextContent('34%');
+    const reference = await screen.findByRole('region', {name: 'Selected species reference'});
+    expect(within(reference).getByRole('heading', {name: threeSpot.english_name})).toBeVisible();
     fireEvent.click(candidate);
     expect(candidate).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByRole('link', {name: /Open species entry/}));
+    const selected = screen.getByRole('region', {name: 'Selected species reference'});
+    expect(within(selected).getByRole('heading', {name: blue.english_name})).toBeVisible();
+    fireEvent.click(within(selected).getByRole('link', {name: 'Full species profile'}));
     fireEvent.click(await screen.findByRole('link', {name: 'Back to comparison'}));
     expect(await screen.findByRole('button', {name: /Blue swimming crab/})).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('updates the comparison cue on an uncertain result and enlarges either photo', async () => {
+    history.replaceState(null, '', '/#/observations/' + result.id);
+    render(<App/>);
+    expect(await screen.findByText(threeSpot.diagnostic_traits[0])).toBeVisible();
+    fireEvent.click(screen.getByRole('button', {name: /Blue swimming crab/}));
+    expect(screen.getByText(blue.diagnostic_traits[0])).toBeVisible();
+    expect(screen.queryByText(threeSpot.diagnostic_traits[0])).not.toBeInTheDocument();
+    expect(screen.getByRole('link', {name: 'Open species profile'})).toHaveAttribute('href', '#/field-guide/' + blue.id);
+
+    for (const [label, src] of [
+      ['your photo', '/api/uploads/upload-id/image'], ['reference photo', '/images/species/portunus-pelagicus.jpg'],
+    ]) {
+      fireEvent.click(screen.getByRole('button', {name: 'Enlarge ' + label}));
+      const dialog = screen.getByRole('dialog', {name: 'Enlarged ' + label});
+      expect(within(dialog).getByRole('img')).toHaveAttribute('src', src);
+      const close = within(dialog).getByRole('button', {name: 'Close enlarged photo'});
+      expect(close).toHaveFocus();
+      fireEvent.click(close);
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    }
+
+    fireEvent.error(screen.getByRole('img', {name: 'Portunus pelagicus reference photograph'}));
+    expect(screen.getByText('Reference photo unavailable')).toBeVisible();
+    expect(screen.queryByRole('button', {name: 'Enlarge reference photo'})).not.toBeInTheDocument();
   });
 
   it('reuses a successful upload after a failed prediction and labels a personal photo', async () => {
@@ -189,12 +264,57 @@ describe('Shellfie classroom demo', () => {
       expect(await screen.findByRole('heading', {name: title})).toBeInTheDocument();
       expect(within(screen.getByRole('group', {name: 'Model suggestions'})).getByRole('button')).toHaveTextContent('34%');
       if (status === 'identified') {
-        expect(await screen.findByRole('region', {name: 'Identified species details'})).toHaveTextContent('Reported food use');
+        const reference = within(await screen.findByRole('region', {name: 'Selected species reference'}));
+        expect(reference.getByText('Reported food use')).toBeVisible();
+        expect(reference.getByText('A photo cannot confirm food safety.')).toBeVisible();
+        expect(reference.getByRole('link', {name: 'Full species profile'})).toBeVisible();
+        expect(screen.queryByRole('link', {name: 'Open species profile'})).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', {name: 'Check another angle'})).not.toBeInTheDocument();
       } else {
-        expect(screen.queryByRole('region', {name: 'Identified species details'})).not.toBeInTheDocument();
+        expect(screen.queryByRole('region', {name: 'Selected species reference'})).not.toBeInTheDocument();
+        expect(screen.getByRole('heading', {name: 'Check another angle'})).toBeVisible();
+        expect(screen.getByText('A photo cannot confirm food safety.')).toBeVisible();
       }
+      expect(screen.queryByRole('button', {name: 'Retake photo'})).not.toBeInTheDocument();
     },
   );
+
+  it('opens the camera on a blurry result and identifies a replacement photo from the same page', async () => {
+    const blurry = {...result, reason: 'poor_image_quality', quality_warnings: ['possible_blur_or_low_detail']};
+    const next = {...result, id: 'retake-result', upload_id: 'retake-upload', status: 'identified', reason: null};
+    mockApi({prediction: blurry});
+    const respond = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (url, options) => {
+      if (url === '/api/uploads') return ok({id: next.upload_id});
+      if (url === '/api/predictions' && options.method === 'POST') return ok(next);
+      return respond(url, options);
+    });
+    const getUserMedia = vi.fn().mockRejectedValue(new DOMException('Camera permission denied', 'NotAllowedError'));
+    vi.stubGlobal('navigator', Object.create(window.navigator, {mediaDevices: {value: {getUserMedia}}}));
+    history.replaceState(null, '', '/#/observations/' + blurry.id);
+    render(<App/>);
+
+    const tip = within(await screen.findByRole('region', {name: 'The photo may be blurry'}));
+    expect(tip.getByText(/tap the shell to focus/)).toBeVisible();
+    fireEvent.click(tip.getByRole('button', {name: 'Retake photo'}));
+    const camera = within(await screen.findByRole('dialog', {name: 'Take a crab photo'}));
+    expect(await camera.findByRole('alert')).toHaveTextContent('Camera access was blocked');
+    expect(getUserMedia).toHaveBeenCalledOnce();
+    expect(location.hash).toBe('#/observations/' + blurry.id);
+    const input = tip.getByLabelText('Choose crab photograph');
+    const openLibrary = vi.spyOn(input, 'click');
+    fireEvent.click(camera.getByRole('button', {name: 'Upload instead'}));
+    expect(openLibrary).toHaveBeenCalledOnce();
+    fireEvent.change(input, {target: {files: [new File(['replacement'], 'retake.jpg', {type: 'image/jpeg'})]}});
+    expect(await tip.findByRole('img', {name: 'Your selected crab photograph'})).toBeVisible();
+    expect(location.hash).toBe('#/observations/' + blurry.id);
+    fireEvent.click(tip.getByRole('button', {name: 'Identify crab'}));
+    expect(await screen.findByRole('heading', {name: 'Possible match'})).toBeVisible();
+    expect(location.hash).toBe('#/observations/' + next.id);
+    expect(fetchMock).toHaveBeenCalledWith('/api/predictions', expect.objectContaining({
+      method: 'POST', body: JSON.stringify({upload_id: next.upload_id, top_k: 3}),
+    }));
+  });
 
   it('keeps an expired uncertain observation readable and lets the user cancel deletion', async () => {
     const expired = {...result, created_at: Date.now() / 1000 - 90_000};
