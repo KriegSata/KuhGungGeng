@@ -1,6 +1,6 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {CSSProperties, KeyboardEvent} from 'react';
-import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronLeft, Focus, History, ImagePlus, Lightbulb, Link2, LoaderCircle, NotebookText, Search, ShieldAlert, ShieldCheck, Sun, Trash2, Utensils, X} from 'lucide-react';
+import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronLeft, Focus, Globe2, History, ImagePlus, Lightbulb, Link2, LoaderCircle, MapPin, NotebookText, Ruler, Search, ShieldAlert, ShieldCheck, Sun, Trash2, Utensils, X} from 'lucide-react';
 import {animate} from 'animejs/animation';
 import {stagger} from 'animejs/utils';
 import {api, ApiError, startSession, validateFile} from './api';
@@ -19,7 +19,7 @@ const words = (value: string) => value.replaceAll('_', ' ');
 
 type Resource<T> = {status: 'loading'} | {status: 'ready'; data: T} | {status: 'failed'; message: string};
 type Model = {available: boolean; version?: string; species_ids?: string[]};
-type PhotoSelection = {file: File; example?: Species; uploadId?: string};
+type PhotoSelection = {file: File; uploadId?: string};
 type PhotoStage = 'preparing' | 'uploading' | 'analyzing';
 
 function useResource<T>(path: string | null, needsSession = false) {
@@ -100,10 +100,6 @@ function exampleFor(id: string) {
   try { return sessionStorage.getItem('shellfie:example:' + id); } catch { return null; }
 }
 
-function rememberExample(id: string, speciesId: string) {
-  try { sessionStorage.setItem('shellfie:example:' + id, speciesId); } catch { /* Storage may be disabled. */ }
-}
-
 function resultTitle(prediction: Prediction) {
   if (prediction.reason === 'model_unavailable') return 'Identification unavailable';
   return prediction.status === 'identified' ? 'Possible match' : 'Match uncertain';
@@ -170,39 +166,25 @@ export default function App() {
     return () => URL.revokeObjectURL(url);
   }, [photo?.file]);
 
-  async function preparePhoto(loadFile: () => File | Promise<File>, example?: Species) {
+  async function preparePhoto(file: File) {
     if (activity.current) return;
     activity.current = true;
     setPhotoError('');
     setStage('preparing');
     try {
-      const file = await loadFile();
       const invalid = validateFile(file);
       if (invalid) throw new Error(invalid);
       const {width, height} = await photoDimensions(file);
       if (Math.min(width, height) < 224 || width * height > 24_000_000 || Math.max(width, height) > 12000) {
         throw new Error('Use a photo at least 224 × 224 pixels, up to 24 megapixels and 12,000 pixels on either side.');
       }
-      setPhoto({file, example});
+      setPhoto({file});
     } catch (error) {
       setPhotoError((error as Error).message);
     } finally {
       setStage(undefined);
       activity.current = false;
     }
-  }
-
-  function tryExample(example: Species) {
-    if (activity.current) return;
-    const reference = referencePhoto(example.id);
-    if (!reference) return;
-    setPhoto(undefined);
-    location.hash = guide;
-    void preparePhoto(async () => {
-      const response = await fetch(reference.src);
-      if (!response.ok) throw new Error('The example photo could not load. Try again or choose another photo.');
-      return new File([await response.blob()], example.id + '.jpg', {type: 'image/jpeg'});
-    }, example);
   }
 
   async function submitPhoto() {
@@ -222,7 +204,6 @@ export default function App() {
       }
       setStage('analyzing');
       const prediction = await api<Prediction>('/predictions', {method: 'POST', body: JSON.stringify({upload_id: uploadId, top_k: 3})});
-      if (photo.example) rememberExample(prediction.id, photo.example.id);
       setLastResult(prediction);
       if (currentRoute() === sourceRoute) location.hash = observationLink(prediction.id);
     } catch (error) {
@@ -236,7 +217,7 @@ export default function App() {
 
   const picker = {
     photo, preview, stage, error: photoError, model, retryModel,
-    onFile: (file: File) => void preparePhoto(() => file),
+    onFile: (file: File) => void preparePhoto(file),
     onSubmit: () => void submitPhoto(),
   };
 
@@ -258,7 +239,7 @@ export default function App() {
       {speciesId && (catalog.status !== 'ready'
         ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/>
         : selected
-          ? <SpeciesDetail key={selected.id} species={selected} onExample={() => tryExample(selected)} busy={!!stage}
+          ? <SpeciesDetail key={selected.id} species={selected}
               back={returnTo?.speciesId === selected.id ? returnTo.observation : guide}/>
           : <section className="shell-page"><h1>Species unavailable</h1><a href={guide}>Back to the field guide</a></section>)}
       {route === photoTips && <PhotoTips/>}
@@ -370,8 +351,8 @@ function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, o
     }}>
     <input ref={library} type="file" accept="image/jpeg,image/png,image/webp" hidden
       aria-label="Choose crab photograph" onChange={event => select(event.currentTarget)}/>
-    {photo && <figure className="capture-preview"><img src={preview || undefined} alt={photo.example ? 'Selected example crab' : 'Your selected crab photograph'}/>
-      {photo.example && <figcaption><strong>Example photo</strong> · {photo.example.english_name}<br/><PhotoCredit species={photo.example}/></figcaption>}
+    {photo && <figure className="capture-preview">
+      <img src={preview || undefined} alt="Your selected crab photograph"/>
     </figure>}
     <div className="capture-buttons">
       {photo && <button className="primary capture-submit" disabled={!!stage || model.status !== 'ready'} onClick={onSubmit}>
@@ -464,8 +445,8 @@ const speciesTabs = [
   {id: 'sources', label: 'Sources', Icon: Link2},
 ];
 
-function SpeciesDetail({species, back, busy, onExample}: {
-  species: Species; back: string; busy: boolean; onExample: () => void;
+function SpeciesDetail({species, back}: {
+  species: Species; back: string;
 }) {
   const [activeTab, setActiveTab] = useState(0);
   const previousTab = useRef(0);
@@ -532,7 +513,13 @@ function SpeciesDetail({species, back, busy, onExample}: {
     tabButtons.current[next]?.focus({preventScroll: true});
   }
 
-  const overview = <>
+  const overviewFacts = [
+    {label: 'Habitat', value: species.habitat, Icon: MapPin},
+    {label: 'Range', value: species.distribution, Icon: Globe2},
+    {label: 'Reported size', value: species.size_range, Icon: Ruler},
+  ].filter(({value}) => value);
+
+  const overview = <div className="specimen-spread">
     {toxic && <div className="specimen-toxic">
       <span className="specimen-toxic-icon"><ShieldAlert size={26} aria-hidden="true"/></span>
       <div className="specimen-toxic-copy">
@@ -541,19 +528,19 @@ function SpeciesDetail({species, back, busy, onExample}: {
       </div>
       <div className="specimen-toxic-bubbles" aria-hidden="true"><i/><i/><i/><i/><i/></div>
     </div>}
-    <div className="specimen-spread">
-      <div className="specimen-reveal"><SpeciesPhoto species={species} large eager/></div>
-      <section className="specimen-summary specimen-reveal" aria-labelledby="species-overview-heading">
-        <h2 id="species-overview-heading">At a glance</h2>
-        {species.description && <p className="shell-lead">{species.description}</p>}
-        {species.habitat && <dl><div><dt>Habitat</dt><dd>{species.habitat}</dd></div></dl>}
-        {referencePhoto(species.id) && <button className="primary" onClick={onExample} disabled={busy}>
-          <Camera size={18} aria-hidden="true"/> Try this example photo <ArrowRight size={18} aria-hidden="true"/>
-        </button>}
-      </section>
-      {warning}
-    </div>
-  </>;
+    <div className="specimen-overview-photo specimen-reveal"><SpeciesPhoto species={species} large eager/></div>
+    <section className="specimen-summary specimen-reveal" aria-labelledby="species-overview-heading">
+      <h2 id="species-overview-heading">At a glance</h2>
+      {species.description && <p className="shell-lead">{species.description}</p>}
+      {!!overviewFacts.length && <dl className="specimen-overview-facts">
+        {overviewFacts.map(({label, value, Icon}) => <div key={label}>
+          <dt><Icon size={19} aria-hidden="true"/> {label}</dt>
+          <dd>{value}</dd>
+        </div>)}
+      </dl>}
+    </section>
+    {warning}
+  </div>;
   const information = <section className="specimen-notes" aria-label="Crab information">
     <div className="specimen-traits specimen-reveal"><h2>What to look for</h2>
       {species.diagnostic_traits?.length ? <ul>{species.diagnostic_traits.map(trait => <li key={trait}>{trait}</li>)}</ul> : <p>Trait notes await review.</p>}

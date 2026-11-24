@@ -32,7 +32,6 @@ function mockApi({prediction = result, available = true, catalog = [blue, threeS
     if (url === '/api/uploads') return ok({id: 'upload-id'});
     if (url === '/api/predictions') return ok(prediction);
     if (url === '/api/predictions/prediction-id') return ok(prediction);
-    if (url.startsWith('/images/')) return {ok: true, blob: async () => new Blob(['example'], {type: 'image/jpeg'})};
     throw new Error('Unexpected endpoint ' + url);
   });
 }
@@ -89,7 +88,9 @@ describe('Shellfie classroom demo', () => {
     history.replaceState(null, '', '/#/field-guide/portunus-pelagicus');
     render(<App/>);
     const overview = await screen.findByRole('tab', {name: 'Overview', selected: true});
-    expect(screen.getByRole('tabpanel', {name: 'Overview'})).toBeVisible();
+    const overviewPanel = screen.getByRole('tabpanel', {name: 'Overview'});
+    expect(within(overviewPanel).getByRole('img', {name: 'Portunus pelagicus reference photograph'})).toBeVisible();
+    expect(within(overviewPanel).queryByRole('button', {name: 'Try this example photo'})).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', {name: 'What to look for'})).not.toBeInTheDocument();
     overview.focus();
     fireEvent.keyDown(overview, {key: 'ArrowRight'});
@@ -139,16 +140,11 @@ describe('Shellfie classroom demo', () => {
     expect(location.hash).toBe('#/observations/prediction-id');
   });
 
-  it('submits a credited example and restores the chosen comparison after visiting a species', async () => {
+  it('shows a saved example and restores the chosen comparison after visiting a species', async () => {
+    sessionStorage.setItem('shellfie:example:' + result.id, blue.id);
+    history.replaceState(null, '', '/#/observations/' + result.id);
     render(<App/>);
-    fireEvent.click(await screen.findByRole('link', {name: 'Open Blue swimming crab'}));
-    fireEvent.click(await screen.findByRole('button', {name: /Try this example photo/}));
-    expect(await screen.findByRole('img', {name: 'Selected example crab'})).toBeInTheDocument();
-    expect(location.hash).toBe('#/field-guide');
-    fireEvent.click(await screen.findByRole('button', {name: /Identify crab/}));
-    expect(await screen.findByRole('heading', {name: 'Match uncertain'})).toBeInTheDocument();
-    expect(screen.getByRole('heading', {name: 'Example photo'})).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith('/api/uploads', expect.objectContaining({method: 'POST', body: expect.any(FormData)}));
+    expect(await screen.findByRole('heading', {name: 'Example photo'})).toBeInTheDocument();
     const matches = within(screen.getByRole('group', {name: 'Model suggestions'}));
     expect(matches.getByRole('button', {name: /Three-spot swimming crab/})).toHaveTextContent('58%');
     const candidate = matches.getByRole('button', {name: /Blue swimming crab/});
