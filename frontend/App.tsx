@@ -1,12 +1,14 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
-import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronLeft, History, ImagePlus, LoaderCircle, Search, ShieldCheck, Trash2} from 'lucide-react';
+import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronLeft, Focus, History, ImagePlus, Lightbulb, LoaderCircle, Search, ShieldCheck, Sun, Trash2, X} from 'lucide-react';
 import {api, ApiError, startSession, validateFile} from './api';
 import type {Prediction, Species} from './types';
 import SpeciesPhoto, {PhotoCredit, referencePhoto} from './SpeciesPhoto';
 import NutritionDetails from './NutritionDetails';
+import CameraCapture from './CameraCapture';
+import {useScrollReveal} from './useScrollReveal';
 
 const guide = '#/field-guide';
-const identify = '#/identify';
+const photoTips = '#/photo-tips';
 const observations = '#/observations';
 const speciesLink = (id: string) => guide + '/' + encodeURIComponent(id);
 const observationLink = (id: string) => observations + '/' + encodeURIComponent(id);
@@ -53,7 +55,8 @@ function LoadState({state, label, retry}: {state: Resource<unknown>; label: stri
 }
 
 function currentRoute() {
-  return location.hash.startsWith('#/') ? location.hash : guide;
+  const hash = location.hash;
+  return hash.startsWith('#/') && hash !== '#/identify' ? hash : guide;
 }
 
 function useRoute() {
@@ -191,7 +194,7 @@ export default function App() {
     const reference = referencePhoto(example.id);
     if (!reference) return;
     setPhoto(undefined);
-    location.hash = identify;
+    location.hash = guide;
     void preparePhoto(async () => {
       const response = await fetch(reference.src);
       if (!response.ok) throw new Error('The example photo could not load. Try again or choose another photo.');
@@ -241,7 +244,7 @@ export default function App() {
         <BrandLink/>
         <nav className="shell-nav" aria-label="Main navigation">
           <a href={guide} aria-current={guideActive ? 'page' : undefined}><BookOpen size={18}/> Field guide</a>
-          <a href={identify} aria-current={route === identify ? 'page' : undefined}><Camera size={18}/> Identify a photo</a>
+          <a href={photoTips} aria-current={route === photoTips ? 'page' : undefined}><Lightbulb size={18}/> Photo tips</a>
           <a href={observations} aria-current={observationsActive ? 'page' : undefined}><History size={18}/> My observations</a>
         </nav>
       </div>
@@ -255,7 +258,7 @@ export default function App() {
           ? <SpeciesDetail species={selected} onExample={() => tryExample(selected)} busy={!!stage}
               back={returnTo?.speciesId === selected.id ? returnTo.observation : guide}/>
           : <section className="shell-page"><h1>Species unavailable</h1><a href={guide}>Back to the field guide</a></section>)}
-      {route === identify && <Capture picker={picker} lastResult={lastResult}/>}
+      {route === photoTips && <PhotoTips/>}
       {route === observations && <ObservationHistory species={species} onDelete={id => {
         if (lastResult?.id === id) setLastResult(undefined);
       }}/>}
@@ -266,7 +269,7 @@ export default function App() {
         onSelect={id => setCandidates(previous => ({...previous, [predictionId]: id}))}
         onSpecies={id => setReturnTo({speciesId: id, observation: route})}/>}
       {inReview && <>{reviewError && <p role="alert" className="load-state">{reviewError}</p>}<Reviewer onError={setReviewError}/></>}
-      {!guideActive && route !== identify && !observationsActive && !inReview &&
+      {!guideActive && route !== photoTips && !observationsActive && !inReview &&
         <section className="shell-page"><h1>Page unavailable</h1><a href={guide}>Open the field guide</a></section>}
     </main>
     <footer className="shell-footer">
@@ -293,6 +296,7 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, onOpen}: {
   const query = search.trim().toLowerCase();
   const results = species.filter(item => [item.english_name, item.scientific_name, ...item.names.map(name => name.name)]
     .join(' ').toLowerCase().includes(query));
+  const speciesGrid = useScrollReveal(results.map(item => item.id).join(','));
 
   return <>
     <section className={featured ? 'atlas-opening' : 'atlas-opening atlas-opening-single'}>
@@ -300,7 +304,7 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, onOpen}: {
         <img className="atlas-mascot" src="/shellfie-mascot.webp" alt="" width="768" height="768"/>
         <h1>Crabs of the <em>Philippines</em></h1>
         <p>Find possible matches for your crab.</p>
-        <PhotoPicker {...picker} compact/>
+        <PhotoPicker {...picker}/>
       </div>
       {featured && <div className="atlas-feature">
         <a href={speciesLink(featured.id)} onClick={onOpen} className="atlas-feature-image" aria-label={'Open ' + featured.english_name}>
@@ -323,7 +327,7 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, onOpen}: {
         </label>
       </div>
       {catalog.status !== 'ready' ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/> :
-        results.length ? <div className="atlas-grid">{results.map(item => <article className="atlas-card" key={item.id}>
+        results.length ? <div className="atlas-grid" ref={speciesGrid}>{results.map(item => <article className="atlas-card" key={item.id}>
         <a href={speciesLink(item.id)} onClick={onOpen} aria-label={`View ${item.english_name}`}>
           <SpeciesPhoto species={item}/>
           <div className="atlas-card-title"><div><h3>{item.english_name}</h3><i>{item.scientific_name}</i></div><ArrowRight size={20}/></div>
@@ -339,25 +343,22 @@ type PhotoPickerProps = {
   retryModel: () => void; onFile: (file: File) => void; onSubmit: () => void;
 };
 
-function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, onSubmit, compact = false}:
-  PhotoPickerProps & {compact?: boolean}) {
+function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, onSubmit}: PhotoPickerProps) {
   const library = useRef<HTMLInputElement>(null);
-  const camera = useRef<HTMLInputElement>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const stages = {preparing: 'Preparing photo…', uploading: 'Uploading photo…', analyzing: 'Comparing species…'};
   function select(input: HTMLInputElement) {
     if (input.files?.[0]) onFile(input.files[0]);
     input.value = '';
   }
 
-  return <div className={compact ? 'capture-panel hero-capture' : 'capture-panel'} role="group" aria-label="Identify a crab photo"
+  return <div className="hero-capture" role="group" aria-label="Identify a crab photo"
     onDragOver={event => event.preventDefault()} onDrop={event => {
       event.preventDefault();
       if (!stage && event.dataTransfer.files[0]) onFile(event.dataTransfer.files[0]);
     }}>
     <input ref={library} type="file" accept="image/jpeg,image/png,image/webp" hidden
       aria-label="Choose crab photograph" onChange={event => select(event.currentTarget)}/>
-    <input ref={camera} type="file" accept="image/*" capture="environment" hidden
-      aria-label="Take crab photograph" onChange={event => select(event.currentTarget)}/>
     {photo && <figure className="capture-preview"><img src={preview || undefined} alt={photo.example ? 'Selected example crab' : 'Your selected crab photograph'}/>
       {photo.example && <figcaption><strong>Example photo</strong> · {photo.example.english_name}<br/><PhotoCredit species={photo.example}/></figcaption>}
     </figure>}
@@ -365,7 +366,7 @@ function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, o
       {photo && <button className="primary capture-submit" disabled={!!stage || model.status !== 'ready'} onClick={onSubmit}>
         Identify crab <ArrowRight size={18}/>
       </button>}
-      <button className={photo ? 'secondary' : 'primary'} disabled={!!stage} onClick={() => camera.current?.click()}>
+      <button className={photo ? 'secondary' : 'primary'} disabled={!!stage} onClick={() => setCameraOpen(true)}>
         <Camera size={19}/>{photo ? 'Retake photo' : 'Take a photo'}
       </button>
       <button className="secondary" disabled={!!stage} onClick={() => library.current?.click()}>
@@ -374,16 +375,12 @@ function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, o
     </div>
     {stage && <p className="capture-status" role="status"><LoaderCircle className="spin" size={18}/>{stages[stage]}</p>}
     {error && <p className="capture-error" role="alert">{error}</p>}
-    {compact && photo && <CaptureModelStatus model={model} retryModel={retryModel}/>}
-    {compact
-      ? <div className="hero-capture-notes">
-          {!photo && <span>JPG, PNG, WebP · 10 MiB max</span>}
-          <span><ShieldCheck size={14} aria-hidden="true"/> Private · Expires in 24 hours</span>
-        </div>
-      : <>
-          {!photo && <p className="capture-format">You can also drop a JPG, PNG or WebP here. Maximum 10 MiB.</p>}
-          <p className="capture-privacy"><ShieldCheck size={17}/> Photos are private and expire after 24 hours. Never used for training.</p>
-        </>}
+    {photo && <CaptureModelStatus model={model} retryModel={retryModel}/>}
+    <div className="hero-capture-notes">
+      {!photo && <span>JPG, PNG, WebP · 10 MiB max</span>}
+      <span><ShieldCheck size={14} aria-hidden="true"/> Private · Expires in 24 hours</span>
+    </div>
+    {cameraOpen && <CameraCapture onClose={() => setCameraOpen(false)} onPhoto={onFile} onUpload={() => library.current?.click()}/>}
   </div>;
 }
 
@@ -394,21 +391,59 @@ function CaptureModelStatus({model, retryModel}: Pick<PhotoPickerProps, 'model' 
   return null;
 }
 
-function Capture({picker, lastResult}: {picker: PhotoPickerProps; lastResult?: Prediction}) {
-  return <section className="shell-page">
-    <h1>Identify a crab</h1>
-    <p className="shell-lead">Choose a clear photo with the shell, claws and legs in view.</p>
-    <div className="capture-layout">
-      <PhotoPicker {...picker}/>
-      <aside className="capture-aside">
-        <h2>Before you submit</h2>
-        <p>Keep your distance, use even light and leave room around the whole crab.</p>
-        <CaptureModelStatus model={picker.model} retryModel={picker.retryModel}/>
-        <a href={guide}>Browse the field guide <ArrowRight size={16}/></a>
-        {lastResult && <a href={observationLink(lastResult.id)}>View last result <ArrowRight size={16}/></a>}
+function PhotoTips() {
+  const exampleId = 'ocypode-ceratophthalma';
+  const example = referencePhoto(exampleId);
+  const notes = useScrollReveal();
+
+  return <article className="shell-page photo-tips">
+    <header className="tips-intro">
+      <div>
+        <h1>Photo tips</h1>
+        <p>See what a clear, useful crab photo looks like.</p>
+      </div>
+      <a className="primary" href={guide}><Camera size={18} aria-hidden="true"/> Use the photo picker <ArrowRight size={16} aria-hidden="true"/></a>
+    </header>
+    <section aria-label="Good and poor crab photo examples">
+      <div className="tips-comparison">
+        <figure className="tips-photo">
+          <div className="tips-photo-frame">
+            <img src={example.src} width="960" height="720" alt="A sharp, bright photo of a ghost crab on sand, with its shell, claws and legs in view."/>
+            <span className="tips-verdict"><Check size={16} aria-hidden="true"/> Good photo</span>
+          </div>
+          <figcaption><h2>Whole crab in focus</h2><p>The shell markings are sharp, with room around the claws and legs.</p></figcaption>
+        </figure>
+        <figure className="tips-photo tips-photo-retake">
+          <div className="tips-photo-frame">
+            <img src={example.src} width="960" height="720" alt="A dark, blurry close-up of the same crab, with most of its legs cut out of the frame."/>
+            <span className="tips-verdict"><X size={16} aria-hidden="true"/> Retake</span>
+          </div>
+          <figcaption><h2>Too close and blurry</h2><p>Cropping cuts off the legs. Dimming and blur hide the shell markings.</p></figcaption>
+        </figure>
+      </div>
+      <p className="tips-credit"><PhotoCredit species={{id: exampleId}}/></p>
+    </section>
+    <div className="tips-notes" ref={notes}>
+      <section className="tips-checklist" aria-labelledby="photo-checklist">
+        <h2 id="photo-checklist">Before you take a photo</h2>
+        <ul>
+          <li><Focus size={22} aria-hidden="true"/><div><h3>Frame the whole crab</h3><p>Leave room around its claws and legs. Tap the screen to focus on the shell.</p></div></li>
+          <li><Sun size={22} aria-hidden="true"/><div><h3>Look for even light</h3><p>Aim for a clear view of the shell markings without glare or heavy shadows.</p></div></li>
+          <li><Camera size={22} aria-hidden="true"/><div><h3>Try a different angle</h3><p>Stay back and photograph the crab where you found it. Change your angle if the claws are hidden.</p></div></li>
+        </ul>
+      </section>
+      <aside className="tips-result" aria-label="Match scores and photo privacy">
+        <section>
+          <h2>Reading your results</h2>
+          <p>Match percentages are model scores. Compare the crab’s features with the reference photos. If you’re unsure, try another angle.</p>
+        </section>
+        <section>
+          <h2>Photo privacy</h2>
+          <p>Private photos expire after 24 hours and are never used for training. Results stay in My observations for 30 days.</p>
+        </section>
       </aside>
     </div>
-  </section>;
+  </article>;
 }
 
 function SpeciesDetail({species, back, busy, onExample}: {
@@ -524,10 +559,12 @@ function ObservationPage({id, prediction, species, model, candidateId, onSelect,
       <figure className="single-observation-photo"><figcaption>{inputLabel}</figcaption>
         <ObservationPhoto prediction={result} alt={inputLabel + ' submitted for identification'}/>
       </figure>
-      <div className="result-actions"><a className="primary" href={guide}>Browse the field guide <ArrowRight size={18}/></a>
-        <a className="secondary" href={identify}>Try another photo</a></div>
+      <div className="result-actions">
+        <a className="primary" href={guide}>{result.reason === 'model_unavailable' ? 'Browse the field guide' : 'Try another photo'} <ArrowRight size={18}/></a>
+        <a className="secondary" href={photoTips}>Photo tips</a>
+      </div>
     </>}
-    {result.reason === 'poor_image_quality' && candidate && <a className="secondary" href={identify}>Try another photo</a>}
+    {result.reason === 'poor_image_quality' && candidate && <a className="secondary" href={guide}>Try another photo</a>}
     <p className="result-caution"><ShieldCheck size={20}/> A photo cannot confirm food safety.</p>
     {acceptedSpecies && <SpeciesFacts species={acceptedSpecies} onMore={() => {
       onSpecies(acceptedSpecies.id);
@@ -642,7 +679,7 @@ function ObservationHistory({species, onDelete}: {species: Species[]; onDelete: 
         <h1>My observations</h1>
         <p><ShieldCheck size={17} aria-hidden="true"/> Private to this browser. Results are kept for 30 days and photos for 24 hours.</p>
       </div>
-      {items.length > 0 && <a className="primary" href={identify}><Camera size={18} aria-hidden="true"/> New observation</a>}
+      {items.length > 0 && <a className="primary" href={guide}><Camera size={18} aria-hidden="true"/> New observation</a>}
     </header>
     {resource.status !== 'ready' ? <LoadState state={resource} label="Loading observations…" retry={retry}/> :
       items.length ? <div className="observations-list">{items.map(item =>
@@ -652,7 +689,7 @@ function ObservationHistory({species, onDelete}: {species: Species[]; onDelete: 
           <History size={28} aria-hidden="true"/>
           <h2>No observations yet</h2>
           <p>Your photo identifications will appear here.</p>
-          <a href={identify} className="primary"><Camera size={18} aria-hidden="true"/> Identify a photo</a>
+          <a href={guide} className="primary"><Camera size={18} aria-hidden="true"/> Identify a photo</a>
         </div>}
     <dialog className="delete-confirmation" ref={confirmation} aria-labelledby="delete-heading" onCancel={event => {
       if (deleting) event.preventDefault();

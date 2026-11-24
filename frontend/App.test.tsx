@@ -62,16 +62,30 @@ describe('Shellfie classroom demo', () => {
     expect(screen.getByRole('link', {name: 'View Three-spot swimming crab'})).toBeInTheDocument();
   });
 
-  it('opens the camera and upload pickers from the hero and submits a photo from the same page', async () => {
+  it('opens a live camera from the hero and stops the stream when it closes', async () => {
+    const stop = vi.fn();
+    const stream = {getTracks: () => [{stop}]};
+    const getUserMedia = vi.fn().mockResolvedValue(stream);
+    vi.stubGlobal('navigator', Object.create(window.navigator, {mediaDevices: {value: {getUserMedia}}}));
     render(<App/>);
     const picker = within(screen.getByRole('group', {name: 'Identify a crab photo'}));
-    const camera = picker.getByLabelText('Take crab photograph');
-    const library = picker.getByLabelText('Choose crab photograph');
-    const openCamera = vi.spyOn(camera, 'click');
-    const openLibrary = vi.spyOn(library, 'click');
+    const openLibrary = vi.spyOn(picker.getByLabelText('Choose crab photograph'), 'click');
     fireEvent.click(picker.getByRole('button', {name: 'Take a photo'}));
-    expect(openCamera).toHaveBeenCalledOnce();
-    expect(camera).toHaveAttribute('capture', 'environment');
+    const camera = await screen.findByRole('dialog', {name: 'Take a crab photo'});
+    const preview = within(camera).getByLabelText('Live camera preview') as HTMLVideoElement;
+    await waitFor(() => expect(preview.srcObject).toBe(stream));
+    expect(getUserMedia).toHaveBeenCalledWith(expect.objectContaining({audio: false, video: expect.objectContaining({facingMode: {ideal: 'environment'}})}));
+    expect(openLibrary).not.toHaveBeenCalled();
+    fireEvent.click(within(camera).getByRole('button', {name: 'Close camera'}));
+    expect(stop).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('dialog', {name: 'Take a crab photo'})).not.toBeInTheDocument();
+  });
+
+  it('opens the upload picker and submits a photo from the homepage hero', async () => {
+    render(<App/>);
+    const picker = within(screen.getByRole('group', {name: 'Identify a crab photo'}));
+    const library = picker.getByLabelText('Choose crab photograph');
+    const openLibrary = vi.spyOn(library, 'click');
     fireEvent.click(picker.getByRole('button', {name: 'Upload photo'}));
     expect(openLibrary).toHaveBeenCalledOnce();
     fireEvent.change(library, {target: {files: [new File(['photo'], 'crab.jpg', {type: 'image/jpeg'})]}});
@@ -88,6 +102,8 @@ describe('Shellfie classroom demo', () => {
     render(<App/>);
     fireEvent.click(await screen.findByRole('link', {name: 'Open Blue swimming crab'}));
     fireEvent.click(await screen.findByRole('button', {name: /Try this example photo/}));
+    expect(await screen.findByRole('img', {name: 'Selected example crab'})).toBeInTheDocument();
+    expect(location.hash).toBe('#/field-guide');
     fireEvent.click(await screen.findByRole('button', {name: /Identify crab/}));
     expect(await screen.findByRole('heading', {name: 'Match uncertain'})).toBeInTheDocument();
     expect(screen.getByRole('heading', {name: 'Example photo'})).toBeInTheDocument();
@@ -165,10 +181,25 @@ describe('Shellfie classroom demo', () => {
 
   it('discloses an unavailable model after loading', async () => {
     mockApi({available: false});
-    history.replaceState(null, '', '/#/identify');
     render(<App/>);
+    fireEvent.change(screen.getByLabelText('Choose crab photograph'), {target: {files: [new File(['photo'], 'crab.jpg', {type: 'image/jpeg'})]}});
     expect(await screen.findByText('The identification model is unavailable.')).toBeInTheDocument();
-    expect(screen.getByText(/Never used for training/)).toBeInTheDocument();
+  });
+
+  it('shows photo guidance in its own tab and links back to the homepage picker', async () => {
+    render(<App/>);
+    fireEvent.click(screen.getByRole('link', {name: 'Photo tips'}));
+    expect(await screen.findByRole('heading', {name: 'Photo tips'})).toBeInTheDocument();
+    const comparison = within(screen.getByRole('region', {name: 'Good and poor crab photo examples'}));
+    const clearPhoto = comparison.getByRole('img', {name: /sharp, bright photo/});
+    const retakePhoto = comparison.getByRole('img', {name: /dark, blurry close-up/});
+    expect(clearPhoto).toHaveAttribute('src', retakePhoto.getAttribute('src'));
+    expect(comparison.getByText('Good photo')).toBeInTheDocument();
+    expect(comparison.getByText('Retake')).toBeInTheDocument();
+    expect(screen.getByRole('heading', {name: 'Reading your results'})).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Upload photo'})).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('link', {name: 'Use the photo picker'}));
+    expect(await screen.findByRole('button', {name: 'Upload photo'})).toBeInTheDocument();
   });
 
   it('shows a retry when the catalog cannot load', async () => {

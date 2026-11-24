@@ -9,7 +9,7 @@ export function referencePhoto(speciesId: string) {
   return references[speciesId];
 }
 
-export function PhotoCredit({species}:{species:Species}) {
+export function PhotoCredit({species}:{species:Pick<Species, 'id'>}) {
   const photo=references[species.id];
   if(!photo)return null;
   return <span className="photo-credit"><a href={photo.source} title={photo.title} target="_blank" rel="noreferrer">Photo: {photo.author}</a><span> · </span><a href={photo.licenseUrl||photo.source} target="_blank" rel="noreferrer">{photo.license}</a></span>;
