@@ -1,5 +1,5 @@
 import {afterEach,describe,it,expect} from 'vitest';
-import {cleanup,render,screen} from '@testing-library/react';
+import {cleanup,render,screen,within} from '@testing-library/react';
 import NutritionDetails from './NutritionDetails';
 import type {Nutrition,Species} from './types';
 
@@ -15,10 +15,26 @@ describe('dietary cholesterol display',()=>{
  });
  it('does not turn missing cholesterol into zero or a low claim',()=>{
   const {container}=render(<NutritionDetails species={species({...nutrition,cholesterol_mg:null})}/>);
-  expect(screen.getByText('Not reported')).toBeInTheDocument();
-  expect(screen.getByText('Unknown level')).toBeInTheDocument();
+  const card=screen.getByText('Cholesterol').parentElement!;
+  expect(within(card).getByText('Not reported')).toBeInTheDocument();
+  expect(screen.getByText('Calories').parentElement).toHaveTextContent('Not reported');
   expect(container.querySelector('.high')).toBeNull();
   expect(screen.queryByText(/Below the high threshold/)).not.toBeInTheDocument();
+ });
+ it('shows the serving size ahead of the featured cards and keeps measured zeroes',()=>{
+  render(<NutritionDetails species={species({...nutrition,nutrients:[
+    {name:'Energy',value:98,unit:'kcal'},
+    {name:'Total fat',value:0,unit:'g'},
+    ...nutrition.nutrients,
+    {name:'Sodium',value:494,unit:'mg'},
+  ]})} standalone/>);
+  const serving=screen.getByText('100 g edible portion');
+  const calories=screen.getByText('Calories');
+  expect(serving.compareDocumentPosition(calories) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(calories.parentElement).toHaveTextContent('98 kcal');
+  expect(screen.getByText('Protein').parentElement).toHaveTextContent('19.4 g');
+  expect(screen.getByText('Total fat').parentElement).toHaveTextContent('0 g');
+  expect(screen.getByText('Sodium').parentElement).toHaveTextContent('494 mg');
  });
  it('does not borrow another species nutrition profile',()=>{
   render(<NutritionDetails species={species(null)}/>);

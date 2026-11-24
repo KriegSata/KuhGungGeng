@@ -6,24 +6,82 @@
 .species-name-pair h3 { margin: 0; }
 .species-name-pair em { font-size: 19px; color: #5b7156; }
 .species-description { line-height: 1.7; max-width: 850px; }
-.nutrition-section { margin-block: 24px; padding-top: 24px; border-top: 1px solid #dce4d3; }
+.nutrition-section {
+  container-type: inline-size;
+  margin-block: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+}
 .nutrition-section h4 { font-size: 23px; font-weight: 600; margin: 0 0 12px; }
-.nutrition-section .nutrition-basis { font-size: 15px; color: #5e705b; margin-bottom: 18px; }
-.nutrition-cholesterol { padding: 20px; border: 1px solid #d5decd; border-radius: 12px; background: #f1f5eb; margin-bottom: 20px; }
-.nutrition-cholesterol > div { display: flex; gap: 15px; justify-content: space-between; align-items: baseline; flex-wrap: wrap; }
-.nutrition-cholesterol strong { font-size: 28px; }
-.cholesterol-label { display: block; font-size: 15px; margin-top: 8px; }
-.nutrition-cholesterol.high { border-color: #d8877d; color: #9b2524; background: #fff0ed; }
+.nutrition-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.nutrition-heading :is(h2, h4) { margin: 0; }
+.nutrition-serving {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 15px;
+}
+.nutrition-serving span { color: var(--muted); }
+.nutrition-section .nutrition-basis { margin: 12px 0 18px; font-size: 16px; color: var(--muted); }
+.nutrition-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(8px, 2cqi, 16px); }
+.nutrition-cards > .nutrition-card {
+  --nutrient-color: #54319a;
+  --nutrient-tint: #efe5ff;
+  --nutrient-surface: #f9f5ff;
+  min-width: 0;
+  padding: clamp(10px, 2.5cqi, 20px);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--nutrient-surface);
+}
+.nutrition-cards > .nutrition-card-energy { --nutrient-color: #884200; --nutrient-tint: #ffe7b1; --nutrient-surface: #fffbf2; }
+.nutrition-cards > .nutrition-card-protein { --nutrient-color: #2041ad; --nutrient-tint: #dce6ff; --nutrient-surface: #f2f6ff; }
+.nutrition-cards > .nutrition-card-fat { --nutrient-color: #136553; --nutrient-tint: #d6f2e6; --nutrient-surface: #f2fbf7; }
+.nutrition-cards > .nutrition-cholesterol.high {
+  --nutrient-color: #922d39;
+  --nutrient-tint: #f9d9dd;
+  --nutrient-surface: #fff4f4;
+  border-color: #e8bdc5;
+}
+.nutrition-card dt { margin: 0 0 8px; color: var(--ink); font-size: 15px; font-weight: 700; }
+.nutrition-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 12px;
+  border-radius: 11px;
+  color: var(--nutrient-color);
+  background: var(--nutrient-tint);
+}
+.nutrition-card dd { color: var(--ink); line-height: 1.22; }
+.nutrition-card .nutrition-value { font-size: clamp(24px, 4.5cqi, 40px); font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+.nutrition-value span { font-size: 15px; font-weight: 650; letter-spacing: 0; }
+.nutrition-card .nutrition-missing { font-size: 15px; color: var(--muted); }
+.nutrition-card .cholesterol-label { margin-top: 8px; font-size: 13px; line-height: 1.4; color: var(--nutrient-color); }
 .nutrition-cholesterol.high .cholesterol-label { font-weight: 700; }
-.nutrient-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.nutrient-grid > div { padding: 0 0 12px; }
-.nutrient-grid dt { font-size: 14px; color: #5e705b; }
-.nutrient-grid dd { font-size: 23px; color: #253b35; }
-.nutrient-grid dd span { font-size: 15px; }
-.nutrition-section .nutrition-note, .nutrition-section .nutrition-unknown { font-size: 15px; color: #5e705b; }
+.nutrient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 154px), 1fr));
+  gap: 0 18px;
+  margin-top: 12px;
+}
+.nutrient-grid > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 10px; padding: 10px 0; font-size: 15px; }
+.nutrient-grid dt { margin: 0; color: var(--muted); }
+.nutrient-grid dd { color: var(--ink); font-weight: 650; line-height: inherit; }
+.nutrition-section .nutrition-note, .nutrition-section .nutrition-unknown { font-size: 15px; color: var(--muted); }
 .nutrition-section .nutrition-note { margin-top: 16px; }
 .nutrition-sources { display: grid; gap: 10px; font-size: 14px; line-height: 1.5; }
-@media (max-width: 680px) { .nutrient-grid { grid-template-columns: 1fr 1fr; } .candidate-names strong { font-size: 20px; } }
+@container (max-width: 575px) {
+  .nutrition-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 680px) { .candidate-names strong { font-size: 20px; } }
 .guide-tools { display: flex; align-items: center; gap: 24px; margin: 28px 0 32px; }
 .guide-tools .search { flex: 1; margin: 0; max-width: 640px; border-radius: 12px; }
 .guide-tools > span { font-size: 15px; color: #5e705b; white-space: nowrap; }
@@ -47,7 +105,6 @@
 .photo-card em { font-size: 16px; }
 .photo-card p { font-size: 16px; line-height: 1.6; margin-block: 16px; }
 .photo-card .text-button { margin-top: auto; }
-.toxicity-badge { position: absolute; top: 15px; left: 15px; display: flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 30px; background: #fff2e7; color: #8a4427; font-size: 13px; font-weight: 600; box-shadow: 0 3px 12px #0002; }
 .reopen-result { margin-top: 24px; }
 .prediction-dialog { width: min(900px, calc(100vw - 48px)); max-width: 900px; max-height: calc(100dvh - 64px); padding: 0; border: 1px solid #d9e1d2; border-radius: 22px; background: #fff; color: #253b35; box-shadow: 0 30px 100px #102b3655; overflow-y: auto; overscroll-behavior: contain; }
 .prediction-dialog::backdrop { background: #142d2ac4; backdrop-filter: blur(6px); }

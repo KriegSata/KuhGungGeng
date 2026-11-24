@@ -1,7 +1,10 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
-import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronLeft, Focus, History, ImagePlus, Lightbulb, LoaderCircle, Search, ShieldCheck, Sun, Trash2, X} from 'lucide-react';
+import type {CSSProperties, KeyboardEvent} from 'react';
+import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronLeft, Focus, History, ImagePlus, Lightbulb, Link2, LoaderCircle, NotebookText, Search, ShieldAlert, ShieldCheck, Sun, Trash2, Utensils, X} from 'lucide-react';
+import {animate} from 'animejs/animation';
+import {stagger} from 'animejs/utils';
 import {api, ApiError, startSession, validateFile} from './api';
-import type {Prediction, Species} from './types';
+import type {Prediction, Source, Species} from './types';
 import SpeciesPhoto, {PhotoCredit, referencePhoto} from './SpeciesPhoto';
 import NutritionDetails from './NutritionDetails';
 import CameraCapture from './CameraCapture';
@@ -255,7 +258,7 @@ export default function App() {
       {speciesId && (catalog.status !== 'ready'
         ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/>
         : selected
-          ? <SpeciesDetail species={selected} onExample={() => tryExample(selected)} busy={!!stage}
+          ? <SpeciesDetail key={selected.id} species={selected} onExample={() => tryExample(selected)} busy={!!stage}
               back={returnTo?.speciesId === selected.id ? returnTo.observation : guide}/>
           : <section className="shell-page"><h1>Species unavailable</h1><a href={guide}>Back to the field guide</a></section>)}
       {route === photoTips && <PhotoTips/>}
@@ -328,11 +331,19 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, onOpen}: {
       </div>
       {catalog.status !== 'ready' ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/> :
         results.length ? <div className="atlas-grid" ref={speciesGrid}>{results.map(item => <article className="atlas-card" key={item.id}>
-        <a href={speciesLink(item.id)} onClick={onOpen} aria-label={`View ${item.english_name}`}>
-          <SpeciesPhoto species={item}/>
+        <a href={speciesLink(item.id)} onClick={onOpen} aria-label={`View ${item.english_name}`}
+          aria-describedby={item.toxicity === 'toxic' ? `toxicity-${item.id}` : undefined}>
+          <div className="atlas-card-photo">
+            <SpeciesPhoto species={item}/>
+            {item.toxicity === 'toxic' && <strong className="toxicity-badge" id={`toxicity-${item.id}`}>
+              <span className="toxicity-badge-icon"><ShieldAlert size={16} aria-hidden="true"/></span>
+              Toxic species
+              <span className="toxicity-badge-bubble" aria-hidden="true"/>
+            </strong>}
+          </div>
           <div className="atlas-card-title"><div><h3>{item.english_name}</h3><i>{item.scientific_name}</i></div><ArrowRight size={20}/></div>
         </a>
-        <div className="atlas-card-credit"><PhotoCredit species={item}/>{item.toxicity === 'toxic' && <strong>Toxic species</strong>}</div>
+        <div className="atlas-card-credit"><PhotoCredit species={item}/></div>
       </article>)}</div> : <p>No species found. Try another name.</p>}
     </section>
   </>;
@@ -446,45 +457,183 @@ function PhotoTips() {
   </article>;
 }
 
+const speciesTabs = [
+  {id: 'overview', label: 'Overview', Icon: BookOpen},
+  {id: 'information', label: 'Crab info', Icon: NotebookText},
+  {id: 'nutrition', label: 'Nutrition', Icon: Utensils},
+  {id: 'sources', label: 'Sources', Icon: Link2},
+];
+
 function SpeciesDetail({species, back, busy, onExample}: {
   species: Species; back: string; busy: boolean; onExample: () => void;
 }) {
+  const [activeTab, setActiveTab] = useState(0);
+  const previousTab = useRef(0);
+  const tabButtons = useRef<(HTMLButtonElement | null)[]>([]);
+  const tabDock = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const activePanel = useRef<HTMLDivElement>(null);
+  const toxic = species.toxicity === 'toxic';
+  const toxicWarning = 'Do not eat this crab, even if cooked.';
+  const warning = species.safety_warning && <p className="result-caution specimen-safety">
+    <ShieldCheck size={20} aria-hidden="true"/>{species.safety_warning}
+  </p>;
+
+  useLayoutEffect(() => {
+    const direction = Math.sign(activeTab - previousTab.current);
+    previousTab.current = activeTab;
+    const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const panel = activePanel.current;
+    if (!motion || motion.matches || !panel) return;
+
+    const enter = animate(panel, {opacity: [.4, 1], x: [direction * 16, 0], duration: 290, ease: 'out(3)'});
+    const details = panel.querySelectorAll('.specimen-reveal, .nutrition-card, .species-source-grid > div');
+    const reveal = details.length ? animate(details, {
+      opacity: [.55, 1], y: [12, 0], delay: stagger(45, {start: 65}), duration: 310, ease: 'out(3)',
+    }) : null;
+    function stop() {
+      enter.revert();
+      reveal?.revert();
+    }
+    function updateMotion() {
+      if (motion?.matches) stop();
+    }
+    motion.addEventListener('change', updateMotion);
+    return () => {
+      motion.removeEventListener('change', updateMotion);
+      stop();
+    };
+  }, [activeTab]);
+
+  function selectTab(index: number) {
+    if (index === activeTab) return;
+    if (tabDock.current && stage.current) {
+      const dockBottom = tabDock.current.getBoundingClientRect().bottom;
+      const stageTop = stage.current.getBoundingClientRect().top;
+      if (stageTop < dockBottom) {
+        window.scrollBy({top: stageTop - dockBottom - 8, behavior: 'instant'});
+      }
+    }
+    setActiveTab(index);
+  }
+
+  function handleTabKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const last = speciesTabs.length - 1;
+    let next: number;
+    switch (event.key) {
+      case 'ArrowLeft': next = index === 0 ? last : index - 1; break;
+      case 'ArrowRight': next = index === last ? 0 : index + 1; break;
+      case 'Home': next = 0; break;
+      case 'End': next = last; break;
+      default: return;
+    }
+    event.preventDefault();
+    selectTab(next);
+    tabButtons.current[next]?.focus({preventScroll: true});
+  }
+
+  const overview = <>
+    {toxic && <div className="specimen-toxic">
+      <span className="specimen-toxic-icon"><ShieldAlert size={26} aria-hidden="true"/></span>
+      <div className="specimen-toxic-copy">
+        <strong>Toxic species</strong>
+        <p>{toxicWarning}</p>
+      </div>
+      <div className="specimen-toxic-bubbles" aria-hidden="true"><i/><i/><i/><i/><i/></div>
+    </div>}
+    <div className="specimen-spread">
+      <div className="specimen-reveal"><SpeciesPhoto species={species} large eager/></div>
+      <section className="specimen-summary specimen-reveal" aria-labelledby="species-overview-heading">
+        <h2 id="species-overview-heading">At a glance</h2>
+        {species.description && <p className="shell-lead">{species.description}</p>}
+        {species.habitat && <dl><div><dt>Habitat</dt><dd>{species.habitat}</dd></div></dl>}
+        {referencePhoto(species.id) && <button className="primary" onClick={onExample} disabled={busy}>
+          <Camera size={18} aria-hidden="true"/> Try this example photo <ArrowRight size={18} aria-hidden="true"/>
+        </button>}
+      </section>
+      {warning}
+    </div>
+  </>;
+  const information = <section className="specimen-notes" aria-label="Crab information">
+    <div className="specimen-traits specimen-reveal"><h2>What to look for</h2>
+      {species.diagnostic_traits?.length ? <ul>{species.diagnostic_traits.map(trait => <li key={trait}>{trait}</li>)}</ul> : <p>Trait notes await review.</p>}
+      {species.life_stage_notes && <p>{species.life_stage_notes}</p>}
+      {!!species.lookalikes?.length && <><h3>Similar species</h3><p>{species.lookalikes.join(', ')}</p></>}
+    </div>
+    <div className="specimen-reveal"><h2>Species notes</h2><dl>{[
+      ['Habitat', species.habitat], ['Distribution', species.distribution], ['Reported size', species.size_range],
+      ['Coloration', species.coloration], ['Food use', species.edibility === 'reported_food_use' ? 'Reported food use' :
+        species.edibility === 'not_recommended' ? 'Do not eat' : 'Unverified'],
+      ['Toxicity', toxic ? 'Known toxic species' : species.toxicity === 'diet_related_risk_reported' ? 'Poisoning risk reported' : 'Unverified'],
+    ].filter(([,value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></div>
+    {warning}
+  </section>;
+  const panels = [overview, information, <NutritionDetails species={species} standalone/>, <SpeciesSources species={species}/>];
+
   return <article className="shell-page specimen-page">
     <a className="back-link" href={back}><ChevronLeft size={18}/>{back === guide ? 'Back to the field guide' : 'Back to comparison'}</a>
-    <div className="specimen-spread">
-      <div>
-        <h1>{species.english_name}</h1>
-        <p className="specimen-latin">{species.scientific_name}</p>
-        {species.description && <p className="shell-lead">{species.description}</p>}
-        {referencePhoto(species.id) && <button className="primary" onClick={onExample} disabled={busy}>
-          <Camera size={18}/> Try this example photo <ArrowRight size={18}/>
-        </button>}
+    <header className="specimen-heading">
+      <h1>{species.english_name}</h1>
+      <p className="specimen-latin">{species.scientific_name}</p>
+    </header>
+    <div className="specimen-tab-dock" ref={tabDock}>
+      <div className="specimen-tabs" role="tablist" aria-label="Species details" style={{
+        '--tab-index': activeTab, '--tab-column': activeTab % 2, '--tab-row': Math.floor(activeTab / 2),
+      } as CSSProperties}>
+        <span className="specimen-tab-highlight" aria-hidden="true"/>
+        {speciesTabs.map(({id, label, Icon}, index) => <button
+          key={id} type="button" role="tab" id={`species-tab-${id}`} aria-controls={`species-panel-${id}`}
+          aria-selected={activeTab === index} tabIndex={activeTab === index ? 0 : -1}
+          ref={button => { tabButtons.current[index] = button; }}
+          onClick={() => selectTab(index)} onKeyDown={event => handleTabKey(event, index)}>
+          <Icon size={19} aria-hidden="true"/>{label}
+        </button>)}
       </div>
-      <SpeciesPhoto species={species} large eager/>
     </div>
-    <div className="specimen-notes">
-      <section><h2>What to look for</h2>
-        {species.diagnostic_traits?.length ? <ul>{species.diagnostic_traits.map(trait => <li key={trait}>{trait}</li>)}</ul> : <p>Trait notes await review.</p>}
-        <p>{species.life_stage_notes}</p>
-        <h3>Similar species</h3><p>{species.lookalikes?.join(', ') || 'Lookalike notes await review.'}</p>
-        <h3>Names</h3>{species.names.map(name => <p key={name.name + name.language + name.region}>
-          <strong>{name.name}</strong> · {name.language} · {name.region}<br/><small>{name.scope} · {words(name.status)}</small>
-        </p>)}
-      </section>
-      <section><h2>Species notes</h2><dl>{[
-        ['Habitat', species.habitat], ['Distribution', species.distribution], ['Typical size', species.size_range],
-        ['Coloration', species.coloration], ['Edibility', species.edibility], ['Toxicity', species.toxicity],
-        ['Venom evidence', species.venom_status], ['Conservation', species.conservation_status],
-        ['Regulations', species.regulatory_notes], ['Ecological and common uses', species.common_uses],
-      ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value ? words(value) : 'Not yet reviewed'}</dd></div>)}</dl></section>
+    <div className="specimen-stage" ref={stage}>
+      {speciesTabs.map(({id}, index) => <div key={id} role="tabpanel" id={`species-panel-${id}`}
+        aria-labelledby={`species-tab-${id}`} tabIndex={0} hidden={activeTab !== index}
+        className="specimen-panel" ref={activeTab === index ? activePanel : undefined}>
+        {activeTab === index && <>
+          {toxic && index !== 0 && <p className="specimen-toxic-reminder">
+            <ShieldAlert size={17} aria-hidden="true"/>
+            <span><strong>Toxic species</strong> · <span>{toxicWarning}</span></span>
+          </p>}
+          {panels[index]}
+        </>}
+      </div>)}
     </div>
-    <p className="result-caution"><ShieldCheck size={20}/>{species.safety_warning}</p>
-    <NutritionDetails species={species}/>
-    <section className="sources-section"><h2>Sources and review</h2>
-      {species.sources?.map(source => <p key={source.id}><a href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a></p>)}
-      <p>{species.last_reviewed ? 'Last expert review ' + species.last_reviewed : 'Expert review pending'}</p>
-    </section>
   </article>;
+}
+
+function SpeciesSources({species}: {species: Species}) {
+  const hasPoisoningWarning = species.toxicity === 'toxic' || species.toxicity === 'diet_related_risk_reported';
+  const nutrition = hasPoisoningWarning ? null : species.nutrition;
+  const nutritionSources = nutrition ? [nutrition.source] : [];
+  if (nutrition && nutrition.cholesterol_mg !== null) nutritionSources.push(nutrition.threshold_source);
+  const nutritionIds = new Set(nutritionSources.map(source => source.id));
+  const informationSources = species.sources.filter(source => !nutritionIds.has(source.id));
+
+  return <section className="sources-section">
+    <h2>Sources and review</h2>
+    <div className="species-source-grid">
+      <div><h3>Crab information</h3>
+        <SpeciesSourceLinks sources={informationSources} empty="Reference links are pending."/>
+      </div>
+      <div><h3>Crab nutrition</h3>
+        <SpeciesSourceLinks sources={nutritionSources} empty={species.toxicity === 'toxic'
+          ? 'Food-use nutrition is omitted for this toxic species.'
+          : 'No verified species-specific nutrition source is listed.'}/>
+      </div>
+    </div>
+    <p className="sources-review">{species.last_reviewed ? 'Last expert review ' + species.last_reviewed : 'Expert review pending'}</p>
+  </section>;
+}
+
+function SpeciesSourceLinks({sources, empty}: {sources: Source[]; empty: string}) {
+  return sources.length ? <ul className="species-source-links">{sources.map(source => <li key={source.id}>
+    <a href={source.url} target="_blank" rel="noreferrer">{source.title} <span aria-hidden="true">↗</span></a>
+  </li>)}</ul> : <p>{empty}</p>;
 }
 
 function ObservationPhoto({prediction, alt, lazy = false}: {prediction: Prediction; alt: string; lazy?: boolean}) {

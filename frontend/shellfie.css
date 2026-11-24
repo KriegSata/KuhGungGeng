@@ -106,6 +106,50 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .atlas-card { min-width: 0; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding-bottom: 12px; }
 .atlas-card > a { display: block; text-decoration: none; color: var(--ink); }
 .atlas-card > a:focus-visible { outline-offset: -4px; position: relative; z-index: 1; }
+.atlas-card-photo { position: relative; }
+.atlas-card-photo .toxicity-badge {
+  position: absolute;
+  z-index: 1;
+  inset: 12px auto auto 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border: 1px solid #d5c3ff;
+  border-radius: 11px;
+  color: #fff;
+  background: linear-gradient(111deg, #261349 45%, #4b2588);
+  box-shadow: 0 4px 14px #1c103866;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+.toxicity-badge-icon {
+  flex: none;
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: #d5ff9f;
+  color: #271448;
+}
+.toxicity-badge-bubble {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-left: 1px;
+  border: 1px solid #d9ffa9;
+  border-radius: 50%;
+  background: radial-gradient(circle at 31% 29%, #f3ffdf, #bdf48655 35%, #77aa3780 74%);
+  box-shadow: -4px 6px 0 -3px #d1ffa1, 6px -6px 0 -3px #f5dfff;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .atlas-card > a:is(:hover, :focus-visible) .toxicity-badge-bubble { animation: toxicity-bubble-bob .62s ease-out both; }
+  @keyframes toxicity-bubble-bob {
+    50% { transform: translateY(-3px) scale(1.14); }
+  }
+}
 .atlas-card .reference-photo { margin: 0; aspect-ratio: 16 / 10; background: var(--plate); overflow: hidden; }
 .atlas-card .reference-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; transition: transform .22s ease; }
 .atlas-card > a:hover img { transform: scale(1.025); }
@@ -115,7 +159,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .atlas-card-title i { font-family: Georgia, serif; font-size: 16px; color: var(--muted); }
 .atlas-card-title svg { flex: none; color: var(--blue); }
 .atlas-card-credit { display: flex; align-items: baseline; gap: 8px 14px; flex-wrap: wrap; padding-inline: 15px; }
-.atlas-card-credit > strong { font-size: 13px; color: #873321; }
 
 .shell-page { padding-block: 12px 10px; }
 .shell-page h1 { font-size: clamp(43px, 6vw, 76px); max-width: 18ch; }
@@ -125,28 +168,213 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .shell-page .primary:hover:not(:disabled) { background: var(--deep-blue); }
 .shell-page .secondary { background: var(--surface); border: 1px solid var(--control-line); color: var(--ink); }
 .shell-page .secondary:hover:not(:disabled) { background: var(--soft-blue); }
-.specimen-spread { margin-top: 10px; display: grid; grid-template-columns: .9fr 1.1fr; align-items: center; gap: clamp(20px, 5vw, 70px); }
-.specimen-latin { font: italic clamp(21px, 3vw, 32px) Georgia, serif; color: var(--muted); margin: 15px 0 26px; }
+.specimen-heading { margin: clamp(18px, 3vw, 29px) 0 20px; }
+.specimen-heading h1 { max-width: none; font-size: clamp(35px, 5.3vw, 69px); line-height: 1.02; }
+.specimen-heading .specimen-latin { margin: 8px 0 0; font: italic clamp(19px, 2.6vw, 29px) Georgia, serif; color: var(--muted); }
+.specimen-page {
+  --tab-pad: 7px;
+  --tab-gap: 6px;
+  --tab-height: 52px;
+  --tab-rows: 1;
+  --dock-top-padding: max(6px, env(safe-area-inset-top, 0px));
+  --dock-clearance: calc(var(--tab-rows) * var(--tab-height) + (var(--tab-rows) - 1) * var(--tab-gap) + 2 * var(--tab-pad) + var(--dock-top-padding) + 16px);
+}
+.specimen-tab-dock {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  padding-block: var(--dock-top-padding) 6px;
+  background: var(--paper);
+}
+.specimen-tabs {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: var(--tab-height);
+  gap: var(--tab-gap);
+  padding: var(--tab-pad);
+  border-radius: 18px;
+  background: linear-gradient(112deg, #142759, #213883 70%, #253c90);
+}
+.specimen-tab-highlight {
+  position: absolute;
+  z-index: -1;
+  inset: var(--tab-pad) auto auto var(--tab-pad);
+  width: calc((100% - 2 * var(--tab-pad) - 3 * var(--tab-gap)) / 4);
+  height: var(--tab-height);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #365acf, #304fb9);
+  box-shadow: 0 3px 14px #0b17374d;
+  transform: translateX(calc(var(--tab-index) * (100% + var(--tab-gap))));
+  transition: transform .42s cubic-bezier(.22, 1, .36, 1);
+}
+.specimen-tab-highlight::after {
+  content: "";
+  position: absolute;
+  inset: auto 30% 3px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--shell);
+}
+.specimen-tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 0;
+  border: 0;
+  border-radius: 12px;
+  padding: 6px 8px;
+  background: transparent;
+  color: #f4f6ff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.12;
+}
+.specimen-tabs button[aria-selected="true"] svg { color: var(--shell); }
+.specimen-tabs button[aria-selected="false"]:hover { background: #ffffff19; }
+.specimen-tabs button svg { flex: none; }
+.specimen-tabs button:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+.specimen-stage {
+  margin-top: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 23px;
+  overflow: clip;
+  box-shadow: 0 15px 36px #1427590a;
+}
+.specimen-panel { padding: clamp(15px, 3vw, 34px); }
+.specimen-stage :where(a, button, [tabindex]) { scroll-margin-block-start: var(--dock-clearance); }
+.specimen-panel:focus-visible { outline-offset: -4px; border-radius: 22px; }
+.specimen-panel h2 { font-size: clamp(25px, 3.1vw, 39px); }
+.specimen-panel .nutrition-section { border: 0; margin: 0; padding: 0; }
+.specimen-spread { display: grid; grid-template-columns: minmax(0, 1.24fr) minmax(0, 1fr); align-items: center; gap: clamp(16px, 3vw, 36px); }
+.specimen-summary {
+  background: linear-gradient(132deg, #edf1ff, #f6f8ff 75%);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: clamp(17px, 3vw, 30px);
+}
+.specimen-summary .shell-lead { margin: 12px 0 0; font-size: clamp(17px, 1.7vw, 21px); }
+.specimen-summary dl > div { border-bottom: 0; border-top: 1px solid var(--line); margin-top: 16px; padding: 14px 0 0; font-size: 15px; }
+.specimen-summary dd { color: var(--muted); line-height: 1.5; }
+.specimen-summary .primary { margin-top: 20px; text-align: center; }
+.specimen-summary .primary svg { flex: none; }
+.specimen-toxic {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2.1vw, 22px);
+  min-height: 98px;
+  padding: clamp(14px, 2.2vw, 22px);
+  margin: 0 0 clamp(16px, 3vw, 29px);
+  border: 1px solid #563197;
+  border-radius: 18px;
+  color: #fff;
+  background: radial-gradient(ellipse at 84% 130%, #6644ab, transparent 48%), linear-gradient(102deg, #28144e 22%, #40207a 72%, #29124f);
+}
+.specimen-toxic-icon {
+  flex: none;
+  width: clamp(36px, 5vw, 52px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c9ff7c66;
+  border-radius: 13px;
+  color: #dbffa6;
+  background: #b2fc651a;
+}
+.specimen-toxic-icon svg { width: 54%; height: 54%; }
+.specimen-toxic-copy strong { font-size: clamp(20px, 2.6vw, 28px); line-height: 1.2; }
+.shell-page .specimen-toxic-copy p { margin: 4px 0 0; color: #f3eaff; font-size: 15px; line-height: 1.4; }
+.specimen-toxic-reminder {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 9px 12px;
+  border: 1px solid #e2d5fa;
+  border-radius: 10px;
+  background: #f7f1ff;
+  color: #3c226c;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.specimen-toxic-reminder svg { flex: none; margin-top: 2px; }
+.specimen-toxic-bubbles {
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 0 auto;
+  width: min(40%, 420px);
+  pointer-events: none;
+  background: radial-gradient(ellipse at 68% 68%, #afe98438, transparent 61%);
+}
+.specimen-toxic-bubbles i {
+  position: absolute;
+  width: var(--bubble-size);
+  aspect-ratio: 1;
+  border: 1px solid #dbffb080;
+  border-radius: 50%;
+  background: radial-gradient(circle at 26% 23%, #e9ffcfbb, transparent 27%),
+    radial-gradient(circle at 30% 30%, #bcf87655, #9766f524 70%, #e0ffad91);
+  box-shadow: inset 0 0 12px #d0ffae40, 0 0 20px #bdf98b30;
+}
+.specimen-toxic-bubbles i:nth-child(1) { --bubble-size: 86px; right: 20%; top: 16%; }
+.specimen-toxic-bubbles i:nth-child(2) { --bubble-size: 49px; right: 43%; top: -13%; }
+.specimen-toxic-bubbles i:nth-child(3) { --bubble-size: 25px; right: 11%; top: 10%; }
+.specimen-toxic-bubbles i:nth-child(4) { --bubble-size: 16px; right: 58%; top: 65%; }
+.specimen-toxic-bubbles i:nth-child(5) { --bubble-size: 37px; right: 6%; top: 71%; }
+@media (prefers-reduced-motion: no-preference) {
+  .specimen-toxic-bubbles i { animation: specimen-bubble-rise .76s cubic-bezier(.22, 1, .36, 1) both; }
+  .specimen-toxic-bubbles i:nth-child(even) { animation-delay: .11s; }
+  @keyframes specimen-bubble-rise {
+    from { opacity: 0; transform: translateY(20px) scale(.86); }
+  }
+}
+@media (max-width: 560px) {
+  .specimen-toxic-bubbles { width: 30%; opacity: .42; }
+  .specimen-page { --tab-height: 46px; --tab-rows: 2; }
+  .specimen-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .specimen-tabs button { font-size: 14px; gap: 7px; }
+  .specimen-tabs button svg { width: 16px; height: 16px; }
+  .specimen-tab-highlight {
+    width: calc((100% - 2 * var(--tab-pad) - var(--tab-gap)) / 2);
+    transform: translate(calc(var(--tab-column) * (100% + var(--tab-gap))), calc(var(--tab-row) * (100% + var(--tab-gap))));
+  }
+}
+@media (prefers-reduced-motion: reduce) { .specimen-tab-highlight { transition: none; } }
 .specimen-spread .reference-photo, .comparison .reference-photo { margin: 0; }
 .specimen-spread img, .comparison-grid figure img { display: block; width: 100%; height: auto; object-fit: contain; padding: 0; background: var(--plate); border-radius: 14px; }
-.specimen-spread .reference-photo img { max-height: min(68vh, 640px); }
+.specimen-spread .reference-photo img { max-height: min(58vh, 560px); }
 .shell-page .reference-photo.large { background: transparent; }
 .shell-page .reference-photo figcaption { padding: 8px 0 0; background: transparent; border: 0; }
 .shell-page .photo-use-note { display: none; }
-.specimen-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; margin-block: 38px; padding-top: 22px; border-top: 1px solid var(--line); }
+.specimen-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(16px, 3vw, 36px); align-items: start; }
+.specimen-traits { border-radius: 16px; background: var(--soft-blue); padding: clamp(15px, 2.5vw, 25px); }
+.specimen-traits ul { padding-left: 21px; }
+.specimen-traits li::marker { color: var(--blue); }
+.specimen-traits p:last-child { margin-bottom: 0; }
 .specimen-notes li { margin-block: 7px; }
-.specimen-notes dl > div { display: grid; grid-template-columns: minmax(90px, .6fr) 1fr; gap: 10px; border-bottom: 1px solid var(--line); padding-block: 8px; }
+.specimen-notes dl { margin-top: 11px; }
+.specimen-notes dl > div { display: grid; grid-template-columns: minmax(90px, .6fr) 1fr; gap: 10px; border-bottom: 1px solid var(--line); padding-block: 11px; font-size: 15px; }
 .specimen-notes dt { font-weight: 600; }
-.specimen-notes dd { margin: 0; }
-.sources-section { margin-top: 35px; }
+.specimen-notes dd { margin: 0; color: var(--muted); line-height: 1.5; }
+.specimen-safety { grid-column: 1 / -1; margin: 0; }
+.species-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.species-source-grid > div { border: 1px solid var(--line); border-radius: 16px; padding: 15px 18px; background: var(--soft-blue); }
+.species-source-grid h3 { margin: 0 0 8px; font-size: 19px; }
+.species-source-grid p, .sources-review { color: var(--muted); font-size: 15px; }
+.species-source-links { margin: 0; padding: 0; list-style: none; }
+.species-source-links li + li { border-top: 1px solid var(--line); }
+.species-source-links a { display: block; padding-block: 10px; min-height: 44px; overflow-wrap: anywhere; color: var(--deep-blue); font-size: 15px; text-underline-offset: 3px; }
+.sources-review { margin-bottom: 0; }
 .shell-page .species-facts { background: var(--surface); border-color: var(--line); }
-.shell-page .species-name-pair em, .shell-page .facts-grid dt, .shell-page .facts-note,
-.shell-page .nutrition-section .nutrition-basis, .shell-page .nutrition-section .nutrition-note,
-.shell-page .nutrition-section .nutrition-unknown, .shell-page .nutrient-grid dt { color: var(--muted); }
-.shell-page .facts-grid dd, .shell-page .nutrient-grid dd { color: var(--ink); }
+.shell-page .species-name-pair em, .shell-page .facts-grid dt, .shell-page .facts-note { color: var(--muted); }
+.shell-page .facts-grid dd { color: var(--ink); }
 .shell-page .facts-grid .facts-caution dd { color: #8a4427; }
-.shell-page .nutrition-section, .shell-page .nutrition-cholesterol:not(.high) { border-color: var(--line); }
-.shell-page .nutrition-cholesterol:not(.high) { background: var(--soft-blue); }
 
 .photo-tips { max-width: 1120px; margin-inline: auto; }
 .tips-intro { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 26px; margin-bottom: 24px; }
@@ -352,10 +580,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .atlas-index { margin-top: 27px; }
   .atlas-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
   .atlas-card { border-radius: 15px; }
+  .atlas-card-photo .toxicity-badge { top: 8px; left: 8px; gap: 6px; font-size: 12px; }
+  .toxicity-badge-icon { width: 24px; height: 24px; }
   .atlas-card-title, .atlas-card-credit { padding-inline: 10px; }
   .atlas-card-title i { font-size: 14px; }
   .atlas-card-title svg { width: 16px; }
-  .specimen-spread, .specimen-notes, .comparison-grid, .tips-notes { grid-template-columns: 1fr; }
+  .specimen-spread, .specimen-notes, .species-source-grid, .comparison-grid, .tips-notes { grid-template-columns: 1fr; }
   .tips-intro { margin-bottom: 16px; }
   .tips-comparison { border-radius: 16px; }
   .tips-photo-frame { aspect-ratio: 4 / 3; border-radius: 9px; }
