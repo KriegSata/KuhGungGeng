@@ -74,9 +74,11 @@ describe('Shellfie classroom demo', () => {
     history.replaceState(null, '', '/#/field-guide/zosimus-aeneus');
     render(<App/>);
     const overview = await screen.findByRole('tabpanel', {name: 'Overview'});
-    expect(within(overview).getByText(/^Toxic species$/).closest('.specimen-toxic')).toBeVisible();
+    const safetySources = within(overview).getByRole('button', {name: 'View safety sources'});
+    expect(safetySources).toHaveAccessibleDescription('Toxic species Do not eat this crab, even if cooked.');
     expect(within(overview).getByText('Do not eat this crab, even if cooked.')).toBeVisible();
-    fireEvent.click(screen.getByRole('tab', {name: 'Sources'}));
+    fireEvent.click(safetySources);
+    expect(screen.getByRole('tab', {name: 'Sources', selected: true})).toHaveFocus();
     expect(screen.getByRole('link', {name: warning.title})).toHaveAttribute('href', warning.url);
     expect(screen.getByRole('heading', {name: 'Crab nutrition'})).toBeVisible();
     const sources = screen.getByRole('tabpanel', {name: 'Sources'});

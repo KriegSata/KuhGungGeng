@@ -444,6 +444,7 @@ const speciesTabs = [
   {id: 'nutrition', label: 'Nutrition', Icon: Utensils},
   {id: 'sources', label: 'Sources', Icon: Link2},
 ];
+const speciesSourcesTab = speciesTabs.findIndex(tab => tab.id === 'sources');
 
 function SpeciesDetail({species, back}: {
   species: Species; back: string;
@@ -496,6 +497,7 @@ function SpeciesDetail({species, back}: {
       }
     }
     setActiveTab(index);
+    tabButtons.current[index]?.focus({preventScroll: true});
   }
 
   function handleTabKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -510,7 +512,6 @@ function SpeciesDetail({species, back}: {
     }
     event.preventDefault();
     selectTab(next);
-    tabButtons.current[next]?.focus({preventScroll: true});
   }
 
   const overviewFacts = [
@@ -520,14 +521,19 @@ function SpeciesDetail({species, back}: {
   ].filter(({value}) => value);
 
   const overview = <div className="specimen-spread">
-    {toxic && <div className="specimen-toxic">
+    {toxic && <button className="specimen-toxic" type="button"
+      aria-label="View safety sources" aria-describedby="species-toxic-title species-toxic-description"
+      onClick={() => selectTab(speciesSourcesTab)}>
       <span className="specimen-toxic-icon"><ShieldAlert size={26} aria-hidden="true"/></span>
-      <div className="specimen-toxic-copy">
-        <strong>Toxic species</strong>
-        <p>{toxicWarning}</p>
-      </div>
-      <div className="specimen-toxic-bubbles" aria-hidden="true"><i/><i/><i/><i/><i/></div>
-    </div>}
+      <span className="specimen-toxic-copy">
+        <strong id="species-toxic-title">Toxic species</strong>
+        <span id="species-toxic-description">{toxicWarning}</span>
+      </span>
+      <span className="specimen-toxic-action" aria-hidden="true">
+        <span>Safety sources</span><ArrowRight size={17}/>
+      </span>
+      <span className="specimen-toxic-bubbles" aria-hidden="true"><i/><i/><i/><i/><i/></span>
+    </button>}
     <div className="specimen-overview-photo specimen-reveal"><SpeciesPhoto species={species} large eager/></div>
     <section className="specimen-summary specimen-reveal" aria-labelledby="species-overview-heading">
       <h2 id="species-overview-heading">At a glance</h2>

@@ -302,14 +302,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 13px;
   min-height: 77px;
   padding: 12px 16px;
   border: 1px solid #563197;
   border-radius: 14px;
   color: #fff;
-  background: radial-gradient(ellipse at 84% 130%, #6644ab, transparent 48%), linear-gradient(102deg, #28144e 22%, #40207a 72%, #29124f);
+  text-align: start;
+  background: radial-gradient(ellipse at 86% 125%, #6742a7, transparent 48%), linear-gradient(102deg, #241242 22%, #41237c 74%, #301657);
 }
+.specimen-toxic:is(:hover, :focus-visible) { border-color: #c8ef8b; }
+.specimen-toxic:focus-visible { outline: 2px solid var(--deep-blue); outline-offset: 3px; }
 .specimen-toxic-icon {
   flex: none;
   width: clamp(34px, 5vw, 42px);
@@ -322,8 +325,23 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   background: #b2fc651a;
 }
 .specimen-toxic-icon svg { width: 54%; height: 54%; }
-.specimen-toxic-copy strong { font-size: clamp(18px, 2vw, 22px); line-height: 1.2; }
-.shell-page .specimen-toxic-copy p { margin: 4px 0 0; color: #f3eaff; font-size: 15px; line-height: 1.4; }
+.specimen-toxic-copy { flex: 1; min-width: 0; }
+.specimen-toxic-copy strong { display: block; font-size: clamp(18px, 2vw, 22px); line-height: 1.2; }
+.specimen-toxic-copy > span { display: block; margin-top: 3px; color: #f7efff; font-size: 15px; line-height: 1.35; }
+.specimen-toxic-action {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid #e9daff80;
+  border-radius: 8px;
+  color: #fff;
+  background: #211041b8;
+  font-size: 13px;
+  font-weight: 720;
+}
+.specimen-toxic:is(:hover, :focus-visible) .specimen-toxic-action { background: #e4fcb8; color: #28144e; border-color: #e4fcb8; }
 .specimen-toxic-reminder {
   display: flex;
   align-items: flex-start;
@@ -342,7 +360,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   position: absolute;
   z-index: -1;
   inset: 0 0 0 auto;
-  width: min(32%, 175px);
+  width: min(42%, 285px);
   pointer-events: none;
   background: radial-gradient(ellipse at 68% 68%, #afe98438, transparent 61%);
 }
@@ -362,6 +380,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .specimen-toxic-bubbles i:nth-child(4) { --bubble-size: 11px; right: 54%; top: 65%; }
 .specimen-toxic-bubbles i:nth-child(5) { --bubble-size: 23px; right: 4%; top: 81%; }
 @media (prefers-reduced-motion: no-preference) {
+  .specimen-toxic-action { transition: background-color .2s, color .2s, border-color .2s; }
+  .specimen-toxic-action svg, .specimen-toxic-bubbles { transition: transform .28s ease-out; }
+  .specimen-toxic:is(:hover, :focus-visible) .specimen-toxic-action svg { transform: translateX(2px); }
+  .specimen-toxic:is(:hover, :focus-visible) .specimen-toxic-bubbles { transform: translateY(-6px) scale(1.04); }
   .specimen-toxic-bubbles i { animation: specimen-bubble-rise .76s cubic-bezier(.22, 1, .36, 1) both; }
   .specimen-toxic-bubbles i:nth-child(even) { animation-delay: .11s; }
   @keyframes specimen-bubble-rise {
@@ -369,6 +391,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   }
 }
 @media (max-width: 560px) {
+  .specimen-toxic { min-height: 58px; gap: 8px; padding: 7px 9px; border-radius: 12px; }
+  .specimen-toxic-icon { width: 29px; border-radius: 8px; }
+  .specimen-toxic-copy strong { padding-inline-end: 27px; font-size: 16px; }
+  .specimen-toxic-copy > span { margin-top: 2px; font-size: 14px; }
+  .specimen-toxic-action { position: absolute; inset: 7px 9px auto auto; padding: 3px; }
+  .specimen-toxic-action > span { display: none; }
+  .specimen-toxic-action svg { width: 14px; height: 14px; }
   .specimen-toxic-bubbles { width: 30%; opacity: .42; }
   .specimen-page { --tab-height: 46px; --tab-rows: 2; }
   .specimen-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
