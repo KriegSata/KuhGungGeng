@@ -68,9 +68,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .atlas-mascot {
   --mascot-fade: linear-gradient(90deg, transparent, black 28%);
   position: absolute;
-  width: min(60%, 450px);
+  width: min(56%, 430px);
   height: auto;
-  right: -18px;
+  right: -22px;
   bottom: -8px;
   z-index: -1;
   mask-image: var(--mascot-fade), linear-gradient(180deg, transparent, black 25%);
@@ -79,7 +79,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .atlas-intro h1, .shell-page h1 { font-family: var(--display); font-size: clamp(49px, 5.8vw, 87px); font-weight: 700; line-height: .98; letter-spacing: -.065em; margin: 0; }
 .atlas-intro h1 em { display: block; font-style: normal; color: var(--shell); }
-.atlas-intro > p { font-size: clamp(16px, 1.5vw, 20px); max-width: 26ch; color: #f0f4ff; margin: 16px 0 18px; line-height: 1.5; }
+.atlas-intro > p { font-size: clamp(16px, 1.5vw, 20px); max-width: 28ch; color: #f0f4ff; margin: 18px 0 22px; line-height: 1.5; }
 .atlas-search { width: min(100%, 360px); display: flex; align-items: center; gap: 11px; padding: 0 15px; min-height: 48px; background: var(--surface); color: var(--ink); border: 1px solid var(--control-line); border-radius: 13px; }
 .atlas-search:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
 .atlas-search svg { flex: none; }
@@ -152,20 +152,25 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 
 .capture-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(220px, .7fr); gap: clamp(22px, 5vw, 72px); align-items: start; }
 .capture-panel { border: 1px solid var(--line); background: var(--soft-blue); border-radius: 22px; padding: clamp(16px, 3vw, 34px); }
-.hero-capture { width: min(100%, 370px); padding: 12px; color: var(--ink); background: var(--surface); border-radius: 17px; box-shadow: 0 7px 20px #10288d26; }
-.hero-capture .capture-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(125px, 100%), 1fr)); gap: 8px; }
-.hero-capture .capture-buttons button { justify-content: center; min-width: 0; min-height: 44px; gap: 6px; padding: 8px; border-radius: 10px; font-size: 14px; }
-.hero-capture .capture-buttons button svg { flex: none; width: 17px; }
-.hero-capture .primary { background: var(--shell); border-color: transparent; color: #2d2142; }
+.hero-capture { width: min(100%, 360px); padding: 0; border: 0; background: transparent; color: white; }
+.hero-capture .capture-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr)); gap: 9px; }
+.hero-capture .capture-buttons button { justify-content: center; min-height: 48px; gap: 8px; padding: 9px; border-radius: 12px; font-size: 15px; font-weight: 700; white-space: nowrap; }
+.hero-capture .capture-buttons button svg { flex: none; width: 18px; }
+.hero-capture button:focus-visible { outline-color: var(--shell); }
+.hero-capture .primary { background: var(--shell); border-color: transparent; color: #2d2142; box-shadow: 0 3px 10px #061a6b30; }
 .hero-capture .primary:hover:not(:disabled) { background: #fff1c8; }
-.hero-capture .secondary { background: var(--soft-blue); border-color: var(--line); color: var(--deep-blue); }
-.hero-capture .secondary:hover:not(:disabled) { background: var(--plate); }
+.hero-capture .secondary { background: #183dbc; border-color: #a8baff; color: white; }
+.hero-capture .secondary:hover:not(:disabled) { background: #244ad1; }
 .hero-capture .capture-submit { grid-column: 1 / -1; }
-.hero-capture .capture-preview { margin-bottom: 9px; }
-.hero-capture .capture-preview img { height: 136px; border-radius: 10px; }
+.hero-capture .capture-preview { margin-bottom: 10px; }
+.hero-capture .capture-preview img { height: 148px; border-radius: 12px; background: #1038bb; }
+.hero-capture .photo-credit { color: #e8efff; }
+.hero-capture-notes { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 14px; margin-top: 13px; color: #eef2ff; font-size: 12px; line-height: 1.5; }
+.hero-capture-notes span { display: inline-flex; align-items: center; gap: 6px; }
+.hero-capture-notes svg { flex: none; }
 .hero-capture p { font-size: 13px; line-height: 1.4; }
-.hero-capture .capture-format, .hero-capture .capture-privacy, .hero-capture .capture-status { margin-top: 7px; }
-.hero-capture .capture-privacy svg { width: 14px; }
+.hero-capture .capture-status { margin-top: 9px; color: #eef2ff; }
+.hero-capture [role="alert"] { color: #fff1c8; }
 .hero-capture .load-state { padding-block: 0; }
 .capture-buttons, .result-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .capture-preview { margin: 0 0 14px; }
@@ -283,10 +288,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .atlas-opening { grid-template-columns: 1fr; }
   .atlas-intro { min-height: 0; padding: 26px 18px 22px; border-radius: 23px; }
   .atlas-intro h1 { font-size: clamp(37px, 11vw, 69px); }
-  .atlas-intro > p { max-width: 24ch; margin: 12px 0 18px; }
+  .atlas-intro > p { max-width: 21ch; margin: 12px 0 18px; text-wrap: balance; }
   .atlas-index-title, .atlas-search { width: 100%; }
   .atlas-index-title { justify-content: space-between; }
-  .atlas-mascot { --mascot-fade: linear-gradient(110deg, transparent 10%, black 59%); width: min(60%, 260px); right: -24px; bottom: -7px; }
+  .atlas-mascot {
+    --mascot-fade: linear-gradient(110deg, transparent 5%, black 48%);
+    width: min(48%, 230px);
+    top: 22px;
+    right: -20px;
+    bottom: auto;
+    mask-image: var(--mascot-fade), linear-gradient(180deg, transparent, black 18% 74%, transparent 100%);
+  }
   .atlas-feature { display: none; }
   .atlas-index { margin-top: 27px; }
   .atlas-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }

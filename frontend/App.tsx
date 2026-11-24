@@ -299,7 +299,7 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, onOpen}: {
       <div className="atlas-intro">
         <img className="atlas-mascot" src="/shellfie-mascot.webp" alt="" width="768" height="768"/>
         <h1>Crabs of the <em>Philippines</em></h1>
-        <p>Take or upload a photo to find possible matches.</p>
+        <p>Find possible matches for your crab.</p>
         <PhotoPicker {...picker} compact/>
       </div>
       {featured && <div className="atlas-feature">
@@ -375,12 +375,15 @@ function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, o
     {stage && <p className="capture-status" role="status"><LoaderCircle className="spin" size={18}/>{stages[stage]}</p>}
     {error && <p className="capture-error" role="alert">{error}</p>}
     {compact && photo && <CaptureModelStatus model={model} retryModel={retryModel}/>}
-    {!photo && <p className="capture-format">
-      {compact ? 'JPG, PNG or WebP · Up to 10 MiB' : 'You can also drop a JPG, PNG or WebP here. Maximum 10 MiB.'}
-    </p>}
-    <p className="capture-privacy"><ShieldCheck size={17}/>{compact
-      ? 'Private photos expire after 24 hours.'
-      : 'Photos are private and expire after 24 hours. Never used for training.'}</p>
+    {compact
+      ? <div className="hero-capture-notes">
+          {!photo && <span>JPG, PNG, WebP · 10 MiB max</span>}
+          <span><ShieldCheck size={14} aria-hidden="true"/> Private · Expires in 24 hours</span>
+        </div>
+      : <>
+          {!photo && <p className="capture-format">You can also drop a JPG, PNG or WebP here. Maximum 10 MiB.</p>}
+          <p className="capture-privacy"><ShieldCheck size={17}/> Photos are private and expire after 24 hours. Never used for training.</p>
+        </>}
   </div>;
 }
 
