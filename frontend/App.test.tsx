@@ -123,6 +123,32 @@ describe('Shellfie classroom demo', () => {
     expect(sources.querySelector('.specimen-toxic')).toBeNull();
   });
 
+  it('shows reported poisoning on the guide card and links its profile warning to the evidence', async () => {
+    const risk = {id: 'seafdec-land-crab-risk', title: 'SEAFDEC safety handbook', url: 'https://repository.seafdec.org/'};
+    const land = {...blue, id: 'cardisoma-carnifex', english_name: 'Mangrove land crab', scientific_name: 'Cardisoma carnifex',
+      toxicity: 'diet_related_risk_reported', sources: [risk]};
+    mockApi({catalog: [land]});
+    render(<App/>);
+    const card = await screen.findByRole('link', {name: 'View Mangrove land crab'});
+    expect(card).toHaveAccessibleDescription('Poisoning risk reported');
+    fireEvent.click(card);
+    const banner = await screen.findByRole('button', {name: 'View safety sources'});
+    expect(banner).toHaveAccessibleDescription(/Poisoning risk reported.*Severity in people is unverified/);
+    fireEvent.click(banner);
+    expect(screen.getByRole('link', {name: risk.title})).toHaveAttribute('href', risk.url);
+  });
+
+  it('shows a shared name link without adding a poisoning badge to a ghost crab', async () => {
+    const ghost = {...blue, id: 'ocypode-ceratophthalma', english_name: 'Horn-eyed ghost crab',
+      shared_local_name: {name: 'Agokoy', species_id: 'atergatis-floridus', species_name: 'floral egg crab'}};
+    mockApi({catalog: [ghost]});
+    history.replaceState(null, '', '/#/field-guide/' + ghost.id);
+    render(<App/>);
+    expect(await screen.findByText('Shared local name')).toBeVisible();
+    expect(screen.getByRole('link', {name: 'floral egg crab'})).toHaveAttribute('href', '#/field-guide/atergatis-floridus');
+    expect(screen.queryByRole('button', {name: 'View safety sources'})).not.toBeInTheDocument();
+  });
+
   it('shows one species panel at a time and supports keyboard navigation between tabs', async () => {
     history.replaceState(null, '', '/#/field-guide/portunus-pelagicus');
     render(<App/>);
@@ -231,6 +257,20 @@ describe('Shellfie classroom demo', () => {
     fireEvent.error(screen.getByRole('img', {name: 'Portunus pelagicus reference photograph'}));
     expect(screen.getByText('Reference photo unavailable')).toBeVisible();
     expect(screen.queryByRole('button', {name: 'Enlarge reference photo'})).not.toBeInTheDocument();
+  });
+
+  it('flags toxic and reported-risk candidates even when neither is selected', async () => {
+    const floral = {...blue, id: 'atergatis-floridus', english_name: 'Floral egg crab', toxicity: 'toxic'};
+    const land = {...blue, id: 'cardisoma-carnifex', english_name: 'Mangrove land crab', toxicity: 'diet_related_risk_reported'};
+    const candidates = [result.candidates[0], {...floral, species_id: floral.id, confidence: .21},
+      {...land, species_id: land.id, confidence: .13}];
+    mockApi({prediction: {...result, candidates}, catalog: [threeSpot, floral]});
+    history.replaceState(null, '', '/#/observations/' + result.id);
+    render(<App/>);
+    const matches = within(await screen.findByRole('group', {name: 'Model suggestions'}));
+    expect(await matches.findByRole('button', {name: /Floral egg crab.*Toxic species.*21%/, pressed: false})).toBeVisible();
+    expect(matches.getByRole('button', {name: /Mangrove land crab.*Poisoning risk reported.*13%/, pressed: false})).toBeVisible();
+    expect(matches.getByRole('button', {pressed: true})).not.toHaveTextContent(/Poisoning risk reported|Toxic species/);
   });
 
   it('reuses a successful upload after a failed prediction and labels a personal photo', async () => {

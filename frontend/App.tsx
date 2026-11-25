@@ -17,6 +17,8 @@ const observations = '#/observations';
 const speciesLink = (id: string) => guide + '/' + encodeURIComponent(id);
 const observationLink = (id: string) => observations + '/' + encodeURIComponent(id);
 const words = (value: string) => value.replaceAll('_', ' ');
+const speciesRiskLabel = (toxicity?: string) => toxicity === 'toxic' ? 'Toxic species' :
+  toxicity === 'diet_related_risk_reported' ? 'Poisoning risk reported' : undefined;
 
 const habitatFilters = [
   {label: 'Beach', pattern: /\bbeach(?:es)?\b/i},
@@ -304,7 +306,7 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
   const query = search.trim().toLowerCase();
   const habitatPattern = habitatFilters.find(filter => filter.label === habitat)?.pattern;
   const results = species.filter(item => (!habitatPattern || habitatPattern.test(item.habitat ?? '')) &&
-    [item.english_name, item.scientific_name, ...item.names.map(name => name.name)].join(' ').toLowerCase().includes(query));
+    [item.english_name, item.scientific_name, ...(item.synonyms ?? []), ...item.names.map(name => name.name)].join(' ').toLowerCase().includes(query));
   const speciesGrid = useScrollReveal(results.map(item => item.id).join(','));
 
   return <>
@@ -346,21 +348,25 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
         </div>}
       </div>
       {catalog.status !== 'ready' ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/> :
-        results.length ? <div className="atlas-grid" ref={speciesGrid}>{results.map(item => <article className="atlas-card" key={item.id}>
-        <a href={speciesLink(item.id)} onClick={onOpen} aria-label={`View ${item.english_name}`}
-          aria-describedby={item.toxicity === 'toxic' ? `toxicity-${item.id}` : undefined}>
-          <div className="atlas-card-photo">
-            <SpeciesPhoto species={item}/>
-            {item.toxicity === 'toxic' && <strong className="toxicity-badge" id={`toxicity-${item.id}`}>
-              <span className="toxicity-badge-icon"><ShieldAlert size={16} aria-hidden="true"/></span>
-              Toxic species
-              <span className="toxicity-badge-bubble" aria-hidden="true"/>
-            </strong>}
-          </div>
-          <div className="atlas-card-title"><div><h3>{item.english_name}</h3><i>{item.scientific_name}</i></div><ArrowRight size={20}/></div>
-        </a>
-        <div className="atlas-card-credit"><PhotoCredit species={item}/></div>
-      </article>)}</div> : <div className="atlas-empty">
+        results.length ? <div className="atlas-grid" ref={speciesGrid}>{results.map(item => {
+          const risk = item.toxicity === 'diet_related_risk_reported';
+          const badge = speciesRiskLabel(item.toxicity);
+          return <article className="atlas-card" key={item.id}>
+            <a href={speciesLink(item.id)} onClick={onOpen} aria-label={`View ${item.english_name}`}
+              aria-describedby={badge ? `toxicity-${item.id}` : undefined}>
+              <div className="atlas-card-photo">
+                <SpeciesPhoto species={item}/>
+                {badge && <strong className="toxicity-badge" data-risk={risk ? 'poisoning' : undefined} id={`toxicity-${item.id}`}>
+                  <span className="toxicity-badge-icon"><ShieldAlert size={16} aria-hidden="true"/></span>
+                  <span>{badge}</span>
+                  <span className="toxicity-badge-bubble" aria-hidden="true"/>
+                </strong>}
+              </div>
+              <div className="atlas-card-title"><div><h3>{item.english_name}</h3><i>{item.scientific_name}</i></div><ArrowRight size={20}/></div>
+            </a>
+            <div className="atlas-card-credit"><PhotoCredit species={item}/></div>
+          </article>;
+        })}</div> : <div className="atlas-empty">
         <p>{query || habitat ? 'No species match these filters.' : 'No species are available.'}</p>
         {(query || habitat) && <button type="button" className="secondary" onClick={() => {
           setSearch('');
@@ -501,7 +507,11 @@ function SpeciesDetail({species, back}: {
   const stage = useRef<HTMLDivElement>(null);
   const activePanel = useRef<HTMLDivElement>(null);
   const toxic = species.toxicity === 'toxic';
-  const toxicWarning = 'Do not eat this crab, even if cooked.';
+  const poisoningRisk = species.toxicity === 'diet_related_risk_reported';
+  const warningTitle = toxic ? 'Toxic species' : 'Poisoning risk reported';
+  const warningText = toxic ? 'Do not eat this crab, even if cooked.' : 'Toxin detection has been reported. Severity in people is unverified.';
+  const localNames = species.names.filter(name => name.scope === 'vernacular').map(name => name.name);
+  const sharedName = species.shared_local_name;
   const warning = species.safety_warning && <p className="result-caution specimen-safety">
     <ShieldCheck size={20} aria-hidden="true"/>{species.safety_warning}
   </p>;
@@ -566,13 +576,13 @@ function SpeciesDetail({species, back}: {
   ].filter(({value}) => value);
 
   const overview = <div className="specimen-spread">
-    {toxic && <button className="specimen-toxic" type="button"
+    {(toxic || poisoningRisk) && <button className="specimen-toxic" type="button" data-risk={poisoningRisk ? 'poisoning' : undefined}
       aria-label="View safety sources" aria-describedby="species-toxic-title species-toxic-description"
       onClick={() => selectTab(speciesSourcesTab)}>
       <span className="specimen-toxic-icon"><ShieldAlert size={26} aria-hidden="true"/></span>
       <span className="specimen-toxic-copy">
-        <strong id="species-toxic-title">Toxic species</strong>
-        <span id="species-toxic-description">{toxicWarning}</span>
+        <strong id="species-toxic-title">{warningTitle}</strong>
+        <span id="species-toxic-description">{warningText}</span>
       </span>
       <span className="specimen-toxic-action" aria-hidden="true">
         <span>Safety sources</span><ArrowRight size={17}/>
@@ -589,6 +599,10 @@ function SpeciesDetail({species, back}: {
           <dd>{value}</dd>
         </div>)}
       </dl>}
+      {sharedName && <div className="specimen-name-note">
+        <BookOpen size={18} aria-hidden="true"/>
+        <p><strong>Shared local name</strong> <i>{sharedName.name}</i> is also used for the {sharedName.toxic && 'toxic '}<a href={speciesLink(sharedName.species_id)}>{sharedName.species_name}</a>. Use more than a local name to identify a crab.</p>
+      </div>}
     </section>
     {warning}
   </div>;
@@ -600,7 +614,7 @@ function SpeciesDetail({species, back}: {
     </div>
     <div className="specimen-reveal"><h2>Species notes</h2><dl>{[
       ['Habitat', species.habitat], ['Distribution', species.distribution], ['Reported size', species.size_range],
-      ['Coloration', species.coloration], ['Food use', species.edibility === 'reported_food_use' ? 'Reported food use' :
+      ['Coloration', species.coloration], ['Philippine names', localNames.join(', ')], ['Food use', species.edibility === 'reported_food_use' ? 'Reported food use' :
         species.edibility === 'not_recommended' ? 'Do not eat' : 'Unverified'],
       ['Toxicity', toxic ? 'Known toxic species' : species.toxicity === 'diet_related_risk_reported' ? 'Poisoning risk reported' : 'Unverified'],
     ].filter(([,value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></div>
@@ -633,9 +647,9 @@ function SpeciesDetail({species, back}: {
         aria-labelledby={`species-tab-${id}`} tabIndex={0} hidden={activeTab !== index}
         className="specimen-panel" ref={activeTab === index ? activePanel : undefined}>
         {activeTab === index && <>
-          {toxic && index !== 0 && <p className="specimen-toxic-reminder">
+          {(toxic || poisoningRisk) && id !== 'overview' && id !== 'nutrition' && <p className="specimen-toxic-reminder" data-risk={poisoningRisk ? 'poisoning' : undefined}>
             <ShieldAlert size={17} aria-hidden="true"/>
-            <span><strong>Toxic species</strong> · <span>{toxicWarning}</span></span>
+            <span><strong>{warningTitle}</strong> · <span>{warningText}</span></span>
           </p>}
           {panels[index]}
         </>}
@@ -647,8 +661,9 @@ function SpeciesDetail({species, back}: {
 function SpeciesSources({species}: {species: Species}) {
   const hasPoisoningWarning = species.toxicity === 'toxic' || species.toxicity === 'diet_related_risk_reported';
   const nutrition = hasPoisoningWarning ? null : species.nutrition;
-  const nutritionSources = nutrition ? [nutrition.source] : [];
-  if (nutrition && nutrition.cholesterol_mg !== null) nutritionSources.push(nutrition.threshold_source);
+  const samples = nutrition ? [nutrition, ...(nutrition.additional_samples ?? [])] : [];
+  const nutritionSources = [...new Map(samples.map(sample => [sample.source.id, sample.source])).values()];
+  if (nutrition && samples.some(sample => sample.cholesterol_mg !== null)) nutritionSources.push(nutrition.threshold_source);
   const nutritionIds = new Set(nutritionSources.map(source => source.id));
   const informationSources = species.sources.filter(source => !nutritionIds.has(source.id));
 
@@ -659,8 +674,8 @@ function SpeciesSources({species}: {species: Species}) {
         <SpeciesSourceLinks sources={informationSources} empty="Reference links are pending."/>
       </div>
       <div><h3>Crab nutrition</h3>
-        <SpeciesSourceLinks sources={nutritionSources} empty={species.toxicity === 'toxic'
-          ? 'Food-use nutrition is omitted for this toxic species.'
+        <SpeciesSourceLinks sources={nutritionSources} empty={hasPoisoningWarning
+          ? 'See the food-safety warning in the Nutrition tab.'
           : 'No verified species-specific nutrition source is listed.'}/>
       </div>
     </div>
@@ -766,6 +781,13 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
   const referenceImage = reference && referencePhoto(reference.id);
   const trait = reference?.diagnostic_traits?.[0] || 'Compare the shape of the shell, claws, and legs you can see in both photos.';
   const photoTip = uncertainPhotoTip(result);
+  const matches = result.candidates.map(item => {
+    const entry = species.find(crab => crab.id === item.species_id);
+    const toxicity = entry?.toxicity ?? item.toxicity;
+    const scientificName = entry?.scientific_name || item.scientific_name;
+    return {item, toxicity, scientificName, name: entry?.english_name || item.english_name || scientificName,
+      riskLabel: speciesRiskLabel(toxicity)};
+  });
 
   return <article className="shell-page observation-page">
     <a className="back-link" href={observations}><ChevronLeft size={18}/> My observations</a>
@@ -787,20 +809,20 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
           <p id="match-score-note">Model scores<span className="visually-hidden">. Select a species to compare photos.</span></p>
         </div>
         <div className="comparison-candidates" role="group" aria-label="Model suggestions" aria-describedby="match-score-note">
-          {result.candidates.map(item => {
-            const entry = species.find(crab => crab.id === item.species_id);
-            const name = item.english_name || entry?.english_name || item.scientific_name;
+          {matches.map(({item, name, scientificName, toxicity, riskLabel}) => {
             const score = Math.round(item.confidence * 100);
             return <button className="match-candidate" key={item.species_id} type="button"
               aria-pressed={candidate.species_id === item.species_id}
               onClick={() => {onSelect(item.species_id); setView('reference');}}>
               <span className="match-species"><strong>{name}</strong>
-                {name !== item.scientific_name && <i>{item.scientific_name}</i>}
+                {name !== scientificName && <i>{scientificName}</i>}
+                {riskLabel && <span className="match-risk" data-toxicity={toxicity}><ShieldAlert size={14} aria-hidden="true"/>{riskLabel}</span>}
               </span>
               <span className="match-score"><span className="visually-hidden">Model score </span>{score}%</span>
             </button>;
           })}
         </div>
+        {matches.some(match => match.riskLabel) && <p className="match-risk-note">Safety badges describe the reference species shown on each card.</p>}
       </div>
       <div className="comparison-switch" role="group" aria-label="Photo view">
         <button type="button" aria-pressed={view === 'input'} onClick={() => setView('input')}>{inputLabel}</button>
@@ -815,7 +837,7 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
         </section>
         <section className="comparison-reference">
           <ComparisonPhoto key={candidate.species_id} label="Reference photo" src={referenceImage?.src}
-            alt={`${candidate.scientific_name} reference photograph`} unavailable="Reference photo unavailable"/>
+            alt={`${reference?.scientific_name ?? candidate.scientific_name} reference photograph`} unavailable="Reference photo unavailable"/>
         </section>
       </div>
       <div className="comparison-cue" aria-live="polite" aria-atomic="true">

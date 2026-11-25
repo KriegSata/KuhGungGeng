@@ -28,30 +28,74 @@ SHORE = _source('australia-asian-shore', 'Australian Government: Asian shore cra
                 'https://www.marinepests.gov.au/pests/identify/asian-shore-crab')
 SHORE_RANGE = _source('usgs-asian-shore', 'USGS: Asian shore crab habitat and native range',
                       'https://nas.er.usgs.gov/queries/factsheet.aspx?SpeciesID=183')
+SHORE_FOOD = _source('mabik-shore-crab-food-use', 'Korea National Marine Biodiversity Institute: Asian shore crab and local food use',
+                     'https://www.mbris.kr/pub/marine/tsearch/tsearchDetail.do?spcTxnId=270000008130')
 BFAR = _source('bfar-pia-2026', 'BFAR / Philippine Information Agency: Beware of deadly crabs',
                'https://pia.gov.ph/news/beware-of-deadly-crabs-bfar/')
+BFAR_REGION9 = _source('bfar-zamboanga-2023', 'BFAR Region 9: Toxic crabs and local names (2023)',
+                       'https://interaksyon.philstar.com/trends-spotlights/2023/07/10/255315/bfar-region9-warns-eating-devil-crab-floral-egg-crab/')
+REEF_TOXICITY = _source('garth-alcala-1977', 'Garth and Alcala: Poisonous reef crabs in the Philippines (1977)',
+                        'https://decapoda.nhm.org/pdfs/16145/16145.pdf#page=4')
 LAND_RISK = _source('seafdec-land-crab-risk', 'SEAFDEC: Toxic marine organisms of the Philippines',
                     'https://repository.seafdec.org/bitstream/handle/20.500.12066/5991/safis25.pdf?isAllowed=y&sequence=1')
+PH_CRAB_NAMES = _source('seafdec-1980', 'Motoh / SEAFDEC: Edible crustacea of the Philippines (1980)',
+                        'https://repository.seafdec.org.ph/bitstream/handle/10862/152/ediblecrustacea.pdf?isAllowed=y&sequence=1')
+FLORAL_LOCAL_NAME = _source('floral-agokoy', 'SeaLifeBase: Philippine name Agokoy for floral egg crab, citing Fresco (2002)',
+                            'https://sealifebase.ca/ComNames/CommonNameSummary.php?autoctr=78835')
+GHOST_WORMS = _source('worms-ghost-crab', 'WoRMS: Accepted name of the horn-eyed ghost crab',
+                      'https://www.marinespecies.org/aphia.php?id=207578&p=taxdetails')
+GHOST_REVISION = _source('davie-ghost-crab-2026', 'Davie et al.: Revision of the horn-eyed ghost crab complex (2026)',
+                         'https://doi.org/10.1155/jzs/8882236')
+GHOST_TAWI = _source('nfrdi-ghost-crab-tawi-tawi', 'Buldiman et al.: Crab records from Tawi-Tawi (2026)',
+                    'https://repository.nfrdi.da.gov.ph/server/api/core/bitstreams/74e6d361-d70b-468c-b258-eaa839c8beb3/content')
 DEVIL = _source('naturalis-zosimus', 'Naturalis: Zosimus aeneus',
                 'https://crabs-japan.linnaeus.naturalis.nl/linnaeus_ng/app/views/species/taxon.php?id=33964')
 FLORAL = _source('wam-floridus', 'Western Australian Museum: Atergatis floridus',
                  'https://museum.wa.gov.au/online-collections/names/atergatis-floridus/')
 FLORAL_RANGE = _source('naturalis-floridus', 'Naturalis: Atergatis floridus records, including Cebu',
                        'https://crabs-japan.linnaeus.naturalis.nl/linnaeus_ng/app/views/species/taxon.php?id=33976')
+GHOST_ENVIRONMENT = _source('nguyen-ghost-crab-2026', 'Nguyen et al.: Ghost crab digestive tract study (2026)',
+                            'https://www.mdpi.com/2673-8929/5/2/65')
+SHORE_LIPIDS = _source('jungblut-shore-crab-2018', 'Jungblut et al.: Asian shore crab midgut lipids (2018)',
+                       'https://doi.org/10.3354/meps12712')
+SHORE_ZINC = _source('luo-shore-crab-zinc-2013', 'Luo et al.: Asian shore crab muscle zinc, table 2 (2013)',
+                     'https://onlinelibrary.wiley.com/doi/10.1002/etc.2136')
 
 
 def _facts(description, traits, habitat, distribution, size, color, similar, sources,
-           *, food=None, risk=None, toxicity='unknown'):
+           *, food=None, risk=(), toxicity='unknown'):
     fields = dict(description=description, diagnostic_traits=traits, habitat=habitat,
                   distribution=distribution, size_range=size, coloration=color, lookalikes=similar)
     claim_sources = {field: [source['id'] for source in sources] for field in fields}
-    claim_sources['edibility'] = [source['id'] for source in (food, risk) if source]
-    claim_sources['toxicity'] = [risk['id']] if risk else []
+    claim_sources['edibility'] = [source['id'] for source in (food, *risk) if source]
+    claim_sources['toxicity'] = [source['id'] for source in risk]
     edibility = 'reported_food_use' if food else 'unknown'
     if toxicity == 'toxic':
         edibility = 'not_recommended'
     return dict(**fields, edibility=edibility, toxicity=toxicity, claim_sources=claim_sources,
-                sources=[*sources, *(source for source in (food, risk) if source)])
+                sources=[*sources, *(source for source in (food, *risk) if source)])
+
+
+LOCAL_NAMES = {
+    'ocypode-ceratophthalma': ([('Agokoy', 'ceb'), ('Agoyokoy', 'ceb'), ('Alagokoy', 'ceb')], [PH_CRAB_NAMES]),
+    'cardisoma-carnifex': ([('Kuray', 'hil'), ('Kagang', 'ceb')], [PH_CRAB_NAMES]),
+    'atergatis-floridus': ([('Agokoy', 'Visayan')], [FLORAL_LOCAL_NAME]),
+}
+
+SHARED_NAME = {
+    'ocypode-ceratophthalma': dict(name='Agokoy', species_id='atergatis-floridus', species_name='floral egg crab', toxic=True),
+    'atergatis-floridus': dict(name='Agokoy', species_id='ocypode-ceratophthalma', species_name='horn-eyed ghost crab'),
+}
+
+
+NUTRITION_EVIDENCE = {
+    'ocypode-ceratophthalma': (
+        'SEAFDEC documents historical food use in the Philippines. The linked Vietnam study examined digestive tracts for microplastics. Edible-meat mineral levels also remain unverified.',
+        (PH_CRAB_NAMES, GHOST_ENVIRONMENT)),
+    'hemigrapsus-sanguineus': (
+        'A coastal pollution study in China found 2.7–4.4 mg zinc per 100 g of wet muscle across site-group averages. The study also detected cadmium. Korea’s marine biodiversity institute documents local food use in Jeollanam-do.',
+        (SHORE_ZINC, SHORE_FOOD, SHORE_LIPIDS)),
+}
 
 
 MUD_HABITAT = 'Soft mud in mangrove creeks, estuaries, and adjacent tidal waters.'
@@ -122,15 +166,16 @@ FACTS = {
         'Coastal burrows behind mangroves and near brackish water.',
         'Indo-West Pacific.', 'Up to 12 cm shell width in males.',
         'Usually greyish to brown.', ['Other land crabs in the family Gecarcinidae'],
-        [_fao(112)], food=_fao(112), risk=LAND_RISK, toxicity='diet_related_risk_reported'),
+        [_fao(112)], food=PH_CRAB_NAMES, risk=(LAND_RISK, _fao(112), BFAR_REGION9), toxicity='diet_related_risk_reported'),
     'ocypode-ceratophthalma': _facts(
         'A sandy-beach ghost crab whose adults can have horn-like extensions above the eyes.',
-        ['Look for long eyestalks and the horn-like extension beyond the eye in adults.',
+        ['Look for horn-like tips beyond the eyes. The tips can be shorter or absent on females and juveniles.',
          'The shell is roughly square and the long legs can blend in with beach sand.'],
         'Burrows in sandy upper beaches, above the usual waterline.',
-        'Indo-West Pacific.', 'Up to 5 cm shell width.',
+        'Indo–West Pacific. Tawi-Tawi records include Sitangkai, Sibutu, Simunul and Bongao.', 'Up to 5 cm shell width.',
         'Sandy tan to grey; the light shell can blend into dry sand.',
-        ['Ocypode cordimanus, which lacks the adult eyestalk horns'], [_fao(116)]),
+        ['Ocypode cordimanus, which lacks the adult eyestalk horns and also goes by agokoy'],
+        [_fao(116), GHOST_WORMS, GHOST_REVISION, GHOST_TAWI], food=PH_CRAB_NAMES),
     'hemigrapsus-sanguineus': _facts(
         'A small rocky-shore crab with banded legs and a square shell.',
         ['Count three teeth on each side of the shell behind the eyes.',
@@ -138,7 +183,7 @@ FACTS = {
         'Rocky intertidal shores, commonly under stones and around crevices or hard structures.',
         'Native to the northwest Pacific. Philippine occurrence remains unverified in these references.',
         'Up to about 5 cm shell width.', 'Variable green to reddish-purple, with banded legs and spotted claws.',
-        ['Other Hemigrapsus shore crabs'], [SHORE, SHORE_RANGE]),
+        ['Other Hemigrapsus shore crabs'], [SHORE, SHORE_RANGE], food=SHORE_FOOD),
     'zosimus-aeneus': _facts(
         'A reef crab with a wide oval shell, flattened bumps, and strongly sculpted edges.',
         ['Look for a wide oval shell with flattened bumps and a front edge divided into four lobes.',
@@ -146,7 +191,8 @@ FACTS = {
         'Shallow tropical reef waters.', 'Indo-Pacific, including the Philippines.',
         'Published specimens measured 9.0 cm (male) and 6.3 cm (female) across the shell.',
         'Dark blotches on a lighter background; use the shell and claw shape as well.',
-        ['Other reef crabs in the family Xanthidae'], [DEVIL, _fao(12)], risk=BFAR, toxicity='toxic'),
+        ['Other reef crabs in the family Xanthidae'], [DEVIL, _fao(12)],
+        risk=(BFAR, REEF_TOXICITY, BFAR_REGION9), toxicity='toxic'),
     'atergatis-floridus': _facts(
         'A rounded reef crab commonly recognized by pale, lace-like markings on its shell.',
         ['Check the smooth, broad oval shell and its rounded front-side edge.',
@@ -154,7 +200,8 @@ FACTS = {
         'Shallow coral and rocky reefs, including shelters beneath rocks and rubble.',
         'Western Pacific, with Philippine records including Cebu.', 'Up to 10 cm shell width.',
         'Green to brown with pale lace-like markings and dark claw tips.',
-        ['Other egg crabs in the genus Atergatis'], [FLORAL, FLORAL_RANGE], risk=BFAR, toxicity='toxic'),
+        ['Other egg crabs in the genus Atergatis'], [FLORAL, FLORAL_RANGE],
+        risk=(BFAR, REEF_TOXICITY, BFAR_REGION9), toxicity='toxic'),
 }
 
 
@@ -165,18 +212,43 @@ def enrich(document):
     if not facts or document.get('identification_status') in {'verified', 'expert_reviewed'}:
         return document
     previous_nutrition = document.get('nutrition') or {}
-    old_nutrition_source = previous_nutrition.get('source', {}).get('id')
+    old_nutrition_sources = {sample.get('source', {}).get('id')
+                             for sample in [previous_nutrition, *previous_nutrition.get('additional_samples', [])]}
     sources = {source['id']: source for source in document.get('sources', [])
-               if source['id'] not in {'scylla-morphology-2019', old_nutrition_source}}
+               if source['id'] != 'scylla-morphology-2019' and source['id'] not in old_nutrition_sources}
     sources.update({source['id']: source for source in facts['sources']})
     claim_sources = {**document.get('claim_sources', {}), **facts['claim_sources']}
     if facts['toxicity'] == 'toxic':
         advisory_ids = {evidence['source_id'] for evidence in document.get('safety_evidence', [])
                         if evidence['source_id'] in sources}
-        claim_sources['toxicity'] = [BFAR['id'], *sorted(advisory_ids)]
+        claim_sources['toxicity'] = list(dict.fromkeys([*claim_sources['toxicity'], *sorted(advisory_ids)]))
     nutrition = nutrition_for(identity)
-    claim_sources['nutrition'] = [nutrition['source']['id']] if nutrition else []
-    if nutrition:
-        sources[nutrition['source']['id']] = nutrition['source']
-    return {**document, **facts, 'nutrition': nutrition, 'sources': list(sources.values()),
-            'claim_sources': claim_sources, 'reference_revision': 'species-facts-2026-11-24'}
+    nutrition_sources = {sample['source']['id']: sample['source']
+                         for sample in [nutrition, *nutrition['additional_samples']]} if nutrition else {}
+    claim_sources['nutrition'] = list(nutrition_sources)
+    sources.update(nutrition_sources)
+    updated = {**document, **facts, 'nutrition': nutrition, 'claim_sources': claim_sources,
+               'reference_revision': 'species-facts-2026-11-25'}
+    if identity == 'ocypode-ceratophthalma':
+        updated['scientific_name'] = 'Ocypode ceratophthalmus'
+        updated['synonyms'] = list(dict.fromkeys([*document.get('synonyms', []), 'Ocypode ceratophthalma']))
+        claim_sources['scientific_name'] = [GHOST_WORMS['id'], GHOST_REVISION['id']]
+    if identity in NUTRITION_EVIDENCE:
+        note, evidence = NUTRITION_EVIDENCE[identity]
+        updated['nutrition_evidence_note'] = note
+        claim_sources['nutrition_evidence_note'] = [source['id'] for source in evidence]
+        sources.update({source['id']: source for source in evidence})
+    if identity in LOCAL_NAMES:
+        local_names, naming_sources = LOCAL_NAMES[identity]
+        names = {(item['name'].casefold(), item['language']): item for item in document.get('names', [])}
+        for name, language in local_names:
+            names.setdefault((name.casefold(), language), dict(name=name, language=language,
+                             region='Philippines', scope='vernacular', status='documented'))
+        updated['names'] = list(names.values())
+        claim_sources['names'] = list(dict.fromkeys([*claim_sources.get('names', []), *(source['id'] for source in naming_sources)]))
+        sources.update({source['id']: source for source in naming_sources})
+    if identity in SHARED_NAME:
+        updated['shared_local_name'] = SHARED_NAME[identity]
+        claim_sources['shared_local_name'] = [PH_CRAB_NAMES['id'], FLORAL_LOCAL_NAME['id']]
+        sources.update({source['id']: source for source in (PH_CRAB_NAMES, FLORAL_LOCAL_NAME)})
+    return {**updated, 'sources': list(sources.values())}
