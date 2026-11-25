@@ -79,12 +79,18 @@ describe('Shellfie classroom demo', () => {
     render(<App/>);
 
     const filters = within(await screen.findByRole('group', {name: 'Filter by habitat'}));
-    expect(filters.getByRole('button', {name: 'All habitats'})).toHaveAttribute('aria-pressed', 'true');
+    expect(filters.getByRole('button', {name: 'All habitats'})).toHaveAttribute('aria-expanded', 'false');
+    expect(filters.queryByRole('button', {name: 'Beach'})).not.toBeInTheDocument();
+    fireEvent.click(filters.getByRole('button', {name: 'All habitats'}));
+    expect(filters.getByRole('button', {name: 'All habitats', expanded: true})).toBeVisible();
     fireEvent.click(filters.getByRole('button', {name: 'Beach'}));
+    expect(filters.getByRole('button', {name: 'Beach'})).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByRole('link', {name: 'View Horn-eyed ghost crab'})).toBeVisible();
     expect(screen.queryByRole('link', {name: 'View Floral egg crab'})).not.toBeInTheDocument();
+    fireEvent.click(filters.getByRole('button', {name: 'Beach'}));
     fireEvent.click(filters.getByRole('button', {name: 'Mangrove'}));
     expect(screen.getByRole('link', {name: 'View Mangrove land crab'})).toBeVisible();
+    fireEvent.click(filters.getByRole('button', {name: 'Mangrove'}));
     fireEvent.click(filters.getByRole('button', {name: 'Reef'}));
     const search = screen.getByRole('searchbox', {name: 'Search species'});
     fireEvent.change(search, {target: {value: 'Atergatis'}});
@@ -93,7 +99,7 @@ describe('Shellfie classroom demo', () => {
 
     const restoredSearch = await screen.findByRole('searchbox', {name: 'Search species'});
     expect(restoredSearch).toHaveValue('Atergatis');
-    expect(screen.getByRole('button', {name: 'Reef'})).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', {name: 'Reef'})).toHaveAttribute('aria-expanded', 'false');
     fireEvent.change(restoredSearch, {target: {value: 'Ocypode'}});
     expect(screen.getByRole('status')).toHaveTextContent('0 species');
     expect(screen.getByText('No species match these filters.')).toBeVisible();

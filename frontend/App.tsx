@@ -316,6 +316,8 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
   revealCards: boolean; onOpen: () => void;
 }) {
   const searchInput = useRef<HTMLInputElement>(null);
+  const [habitatsOpen, setHabitatsOpen] = useState(false);
+  const habitatOptionsId = useId();
   const mascot = useRef<HTMLImageElement>(null);
   const hasPhoto = Boolean(picker.photo);
   const previousHasPhoto = useRef(hasPhoto);
@@ -369,13 +371,20 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
         {catalog.status === 'ready' && <div className="atlas-habitats" role="group" aria-label="Filter by habitat">
           <span className="atlas-habitats-label" aria-hidden="true">Habitat</span>
           <div className="atlas-habitat-options">
-            <button type="button" aria-pressed={habitat === null} onClick={() => setHabitat(null)}>
+            <button type="button" aria-expanded={habitatsOpen} aria-controls={habitatOptionsId}
+              onClick={() => setHabitatsOpen(open => !open)}>
+              <LayoutGrid size={18} aria-hidden="true"/> {habitat ?? 'All habitats'}
+              <ChevronDown size={16} aria-hidden="true" style={{transform: habitatsOpen ? 'rotate(180deg)' : undefined}}/>
+            </button>
+            {habitatsOpen && <div id={habitatOptionsId} className="atlas-habitat-options">
+            <button type="button" aria-pressed={habitat === null} onClick={() => {setHabitat(null); setHabitatsOpen(false);}}>
               <LayoutGrid size={18} aria-hidden="true"/> All habitats
             </button>
             {habitatFilters.map(({label, Icon}) => <button key={label} type="button" data-habitat={label}
-              aria-pressed={habitat === label} onClick={() => setHabitat(label)}>
+              aria-pressed={habitat === label} onClick={() => {setHabitat(label); setHabitatsOpen(false);}}>
               <Icon size={18} aria-hidden="true"/> {label}
             </button>)}
+            </div>}
           </div>
         </div>}
       </div>
