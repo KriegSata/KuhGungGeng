@@ -13,7 +13,7 @@ export function referencePhoto(speciesId: string) {
 export function PhotoCredit({species}:{species:Pick<Species, 'id'>}) {
   const photo=references[species.id];
   if(!photo)return null;
-  return <span className="photo-credit"><a href={photo.source} title={photo.title} target="_blank" rel="noreferrer">Photo: {photo.author}</a><span> · </span><a href={photo.licenseUrl||photo.source} target="_blank" rel="noreferrer">{photo.license}</a></span>;
+  return <span className="photo-credit"><a href={photo.source} title={photo.title} target="_blank" rel="noreferrer">Photo: {photo.author}</a></span>;
 }
 
 export default function SpeciesPhoto({species,large=false,eager=false}:{species:Species;large?:boolean;eager?:boolean}) {

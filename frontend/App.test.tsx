@@ -101,12 +101,10 @@ describe('Shellfie classroom demo', () => {
     expect(restoredSearch).toHaveValue('Atergatis');
     expect(screen.getByRole('button', {name: 'Reef'})).toHaveAttribute('aria-expanded', 'false');
     fireEvent.change(restoredSearch, {target: {value: 'Ocypode'}});
-    expect(screen.getByRole('status')).toHaveTextContent('0 species');
     expect(screen.getByText('No species match these filters.')).toBeVisible();
     fireEvent.click(screen.getByRole('button', {name: 'Clear filters'}));
     expect(restoredSearch).toHaveValue('');
     expect(restoredSearch).toHaveFocus();
-    expect(screen.getByRole('status')).toHaveTextContent('3 species');
   });
 
   it('shows the full toxic warning in Overview and keeps a reminder in Sources', async () => {

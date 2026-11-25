@@ -361,8 +361,7 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
     <section className="atlas-index" aria-labelledby="index-heading">
       <div className="atlas-index-controls">
         <div className="atlas-index-heading">
-          <div className="atlas-index-title"><h2 id="index-heading">Species index</h2>
-            {catalog.status === 'ready' && <output>{results.length} species</output>}</div>
+          <div className="atlas-index-title"><h2 id="index-heading">Species index</h2></div>
           <label className="atlas-search"><Search size={22} aria-hidden="true"/>
             <input ref={searchInput} type="search" aria-label="Search species" placeholder="Search by crab name" value={search}
               onChange={event => setSearch(event.target.value)}/>
@@ -467,10 +466,6 @@ function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, o
     {stage && <p className="capture-status" role="status"><LoaderCircle className="spin" size={18}/>{stages[stage]}</p>}
     {error && <p className="capture-error" role="alert">{error}</p>}
     {photo && <CaptureModelStatus model={model} retryModel={retryModel}/>}
-    {!retake && <div className="hero-capture-notes">
-      {!photo && <span>JPG, PNG, WebP · 10 MiB max</span>}
-      <span><ShieldCheck size={14} aria-hidden="true"/> Private · Expires in 24 hours</span>
-    </div>}
     {cameraOpen && <CameraCapture onClose={() => setCameraOpen(false)} onPhoto={onFile} onUpload={() => library.current?.click()}/>}
   </div>;
 }
