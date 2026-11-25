@@ -24,7 +24,8 @@
   font-size: 15px;
 }
 .nutrition-serving span { color: var(--muted); }
-.nutrition-section .nutrition-basis { margin: 12px 0 18px; font-size: 16px; color: var(--muted); }
+.nutrition-section .nutrition-basis { margin: 12px 0 6px; font-size: 16px; color: var(--muted); }
+.nutrition-sample-source { margin-bottom: 14px; overflow-wrap: anywhere; }
 .nutrition-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(8px, 2cqi, 16px); }
 .nutrition-cards > .nutrition-card {
   --nutrient-color: #54319a;

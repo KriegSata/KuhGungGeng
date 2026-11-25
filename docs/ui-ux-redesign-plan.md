@@ -1,5 +1,37 @@
 # Shellfie UI and UX redesign
 
+## Next design pass for the classroom demo
+
+The logo gives Shellfie two useful qualities. The little crab leans into the frame as if it has spotted something, and the vivid blue makes its pale shell easy to see from a distance. Carry that sense of looking closely from the opening screen into the species photographs. Let a student finish the demo by pointing to one feature they compared.
+
+### How the logo carries through
+
+Use the existing cobalt `#0048FC` for the opening, shell yellow `#FFE4A2` for the main action on blue, pale periwinkle `#E6EBFF` for the photo surround, and navy `#17244B` for reading. Give the photo frame one gently curved edge that echoes the rim of the mascot’s shell. Keep specimen images rectangular inside that surround so legs and claws remain visible. Use the existing DM Sans, with large common names and quieter italic scientific names. Keep deep violet with a shield and explicit text for toxic species, and amber with the existing risk label for reported poisoning.
+
+### Prototype these moments in order
+
+| Priority | What the student sees and does | Behavior to design |
+| --- | --- | --- |
+| 1. Field guide opening | The mascot peeks in from the edge of the cobalt panel. **Take a photo** and **Upload photo** sit together. After selection the student sees their whole photo in the same space. | Let the mascot settle aside once as the preview appears. Keep **Identify crab** beside the preview and the small corner × within a generous tap target. On a phone, reserve room for the controls first. If camera permission is denied, keep Upload available beside the explanation. |
+| 2. Identification results | All candidate percentages stay at the top. Selecting a candidate changes its reference photo and the existing **Look for** clue. A new **Show this feature** control highlights the named feature directly on a reference photo. | Start with one clearly visible feature on one credited image, such as an eye tip on the horn-eyed ghost crab after visual verification. Place the marker by hand and store it against that exact image. Keep the student's photo free of markers. Update the highlight and caption together, including in the enlarged view. Use the existing text clue alone when an image has no verified location. |
+| 3. Field guide browsing | Beach, Mangrove and Reef each get a small recognizable illustration beside the existing label. The selected habitat has a clear outline and the count updates beside the species index. | Keep name search usable alongside the filters. Retain scroll reveals on first entry. On filter changes keep keyboard focus on the selected control and avoid replaying a long entrance across the grid. Restore the filter and place in the index when returning from a profile. |
+| 4. Photo tips | Show the existing good and retake examples together. Under the retake example, let the student choose **Framing**, **Focus** or **Light** and see that single problem on the same specimen. | Pair each change with one actionable caption, such as “Leave space around both claws.” Stack the pair on narrow screens. Offer labeled buttons that work by touch and keyboard. |
+| 5. Profiles and observations | Carry the same photo surround into Overview and the same photo caption style into the observation journal. Give the active sticky tab a short sliding underline. | Keep safety wording visible when opening Overview. Keep source, preparation and serving size attached to the selected nutrition sample. Give expired observation photos a quiet placeholder while retaining the species and date. |
+
+### Build order and classroom checks
+
+First prototype only the hero's empty and selected-photo states and one annotated match on phone and projector-sized layouts. Then connect the verified feature to the live comparison and reuse the pattern on additional images as each is checked. Finish the habitat, tips and profile refinements after the core walkthrough works.
+
+Use the Anime.js dependency already in Shellfie for the coordinated photo transition. Aim for 160–240 ms for a state change. Use simple CSS for button presses and tab selection. Reduced-motion mode switches states immediately. Show scores, warnings, controls and errors as soon as they are available. Keep the uploaded photo readable if motion is interrupted, and cancel the previous transition when a student switches candidates quickly.
+
+For the rehearsal, hand a phone to a classmate and ask them to upload a photo, compare two candidates and point to the feature they inspected. Ask a second person at the back of the room to read the score and any risk label. Repeat on a 320 px screen, with keyboard only and with reduced motion. Also try denied camera access, a blurry photo and a candidate without an annotation. These are proposed checks for the prototype.
+
+---
+
+## Original concept and early implementation notes
+
+The notes below record the earlier direction. The next design pass above follows the current logo, homepage capture controls, visible scores and profile tabs.
+
 ## Design direction
 
 Design a Philippine crab atlas for students exploring species and a teacher watching the team present its work. The first screen opens the field guide. By the end of the demo, someone in the audience should be able to name one feature they examined and explain why the app offered a possible match.

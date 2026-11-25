@@ -1,13 +1,13 @@
 import {useEffect, useRef} from 'react';
 import {animate} from 'animejs/animation';
 
-export function useScrollReveal(contents?: string) {
+export function useScrollReveal(contents?: string, enabled = true) {
   const container = useRef<HTMLDivElement>(null);
   const revealed = useRef(new WeakSet<Element>());
 
   useEffect(() => {
     const section = container.current;
-    if (!section || !window.matchMedia || !window.IntersectionObserver) return;
+    if (!enabled || !section || !window.matchMedia || !window.IntersectionObserver) return;
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (motion.matches) return;
 
@@ -37,7 +37,7 @@ export function useScrollReveal(contents?: string) {
       motion.removeEventListener('change', updateMotion);
       stop();
     };
-  }, [contents]);
+  }, [contents, enabled]);
 
   return container;
 }

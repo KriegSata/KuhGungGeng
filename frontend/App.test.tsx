@@ -273,6 +273,37 @@ describe('Shellfie classroom demo', () => {
     expect(matches.getByRole('button', {pressed: true})).not.toHaveTextContent(/Poisoning risk reported|Toxic species/);
   });
 
+  it('highlights the feature on the matching reference photo and its enlargement', async () => {
+    const ghost = {...blue, id: 'ocypode-ceratophthalma', english_name: 'Horn-eyed ghost crab',
+      scientific_name: 'Ocypode ceratophthalma', diagnostic_traits: ['Look for horn-like tips beyond the eyes.']};
+    const candidates = [{...ghost, species_id: ghost.id, confidence: .58}, result.candidates[1]];
+    mockApi({prediction: {...result, candidates}, catalog: [ghost, blue]});
+    history.replaceState(null, '', '/#/observations/' + result.id);
+    render(<App/>);
+
+    const feature = await screen.findByRole('button', {name: 'Show this feature', pressed: false});
+    const reference = screen.getByRole('img', {name: /Ocypode ceratophthalma reference photograph/});
+    fireEvent.load(reference);
+    fireEvent.click(feature);
+    expect(feature).toHaveAttribute('aria-pressed', 'true');
+    expect(document.getElementById(feature.getAttribute('aria-controls')!)).toHaveTextContent('Eyestalk horn');
+    expect(reference).toHaveAccessibleName(/extends above the eye/);
+    expect(screen.getByRole('img', {name: 'Crab photo submitted for identification'})).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', {name: 'Enlarge reference photo'}));
+    const dialog = within(screen.getByRole('dialog', {name: 'Enlarged reference photo'}));
+    expect(dialog.getByText('Eyestalk horn')).toBeVisible();
+    fireEvent.click(dialog.getByRole('button', {name: 'Close enlarged photo'}));
+
+    fireEvent.click(screen.getByRole('button', {name: /Blue swimming crab.*34%/}));
+    expect(screen.queryByRole('button', {name: 'Show this feature'})).not.toBeInTheDocument();
+    expect(screen.getByText(blue.diagnostic_traits[0])).toBeVisible();
+    fireEvent.click(screen.getByRole('button', {name: /Horn-eyed ghost crab.*58%/}));
+    expect(screen.getByRole('button', {name: 'Show this feature', pressed: false})).toBeVisible();
+    fireEvent.error(screen.getByRole('img', {name: 'Ocypode ceratophthalma reference photograph'}));
+    expect(screen.queryByRole('button', {name: 'Show this feature'})).not.toBeInTheDocument();
+  });
+
   it('reuses a successful upload after a failed prediction and labels a personal photo', async () => {
     const respond = fetchMock.getMockImplementation()!;
     let failed = false;
@@ -367,6 +398,7 @@ describe('Shellfie classroom demo', () => {
     const unresolved = await screen.findByRole('link', {name: 'Unresolved observation'});
     expect(within(unresolved).getByText('Match uncertain')).toBeInTheDocument();
     expect(within(unresolved).getByText('Photo expired')).toBeInTheDocument();
+    expect(unresolved).toHaveAccessibleDescription('Match uncertain Photo expired');
     expect(unresolved).not.toHaveTextContent(threeSpot.scientific_name);
     const match = await screen.findByRole('link', {name: blue.english_name});
     expect(within(match).getByText('Possible match')).toBeInTheDocument();
@@ -391,10 +423,18 @@ describe('Shellfie classroom demo', () => {
     expect(await screen.findByRole('heading', {name: 'Photo tips'})).toBeInTheDocument();
     const comparison = within(screen.getByRole('region', {name: 'Good and poor crab photo examples'}));
     const clearPhoto = comparison.getByRole('img', {name: /sharp, bright photo/});
-    const retakePhoto = comparison.getByRole('img', {name: /dark, blurry close-up/});
+    const retakePhoto = comparison.getByRole('img', {name: /close crop/});
     expect(clearPhoto).toHaveAttribute('src', retakePhoto.getAttribute('src'));
     expect(comparison.getByText('Good photo')).toBeInTheDocument();
     expect(comparison.getByText('Retake')).toBeInTheDocument();
+    expect(comparison.getByRole('button', {name: 'Framing', pressed: true})).toBeVisible();
+    fireEvent.click(comparison.getByRole('button', {name: 'Focus'}));
+    expect(comparison.getByRole('heading', {name: 'Details are blurry'})).toBeVisible();
+    expect(retakePhoto).toHaveAccessibleName(/shell markings and legs are blurry/);
+    fireEvent.click(comparison.getByRole('button', {name: 'Light'}));
+    expect(comparison.getByRole('button', {name: 'Light', pressed: true})).toBeVisible();
+    expect(retakePhoto).toHaveAccessibleName(/dark photo/);
+    expect(clearPhoto).toHaveAccessibleName(/sharp, bright photo/);
     expect(screen.getByRole('heading', {name: 'Reading your results'})).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Upload photo'})).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('link', {name: 'Use the photo picker'}));

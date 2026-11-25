@@ -89,6 +89,9 @@ function SampleNutrients({sample, featured = false}: {sample: NutritionSample; f
     : nutrients;
 
   return <>
+    <div className="nutrition-sources nutrition-sample-source">
+      <a href={sample.source.url} target="_blank" rel="noreferrer">{sample.source.title} <ArrowUpRight size={14} aria-hidden="true"/></a>
+    </div>
     {(featured || cholesterol !== null || range) && <dl className={`nutrition-cards${featured ? '' : ' nutrition-cards-supplement'}`}>
       {featured && featuredNutrients.map(({name, label, tone, Icon}) => {
         const nutrient = nutrients.find(item => item.name === name);
@@ -119,10 +122,9 @@ function SampleNutrients({sample, featured = false}: {sample: NutritionSample; f
       {!vitamins?.length && !sample.vitamin_note && <p className="nutrition-unknown">No verified vitamin values are available for this sample.</p>}
     </div>}
     <p className="nutrition-note">{sample.note}</p>
-    <div className="nutrition-sources">
-      <a href={sample.source.url} target="_blank" rel="noreferrer">{sample.source.title} <ArrowUpRight size={14} aria-hidden="true"/></a>
-      {percent !== null && <a href={sample.threshold_source.url} target="_blank" rel="noreferrer">U.S. FDA Daily Value and high threshold <ArrowUpRight size={14} aria-hidden="true"/></a>}
-    </div>
+    {percent !== null && <div className="nutrition-sources">
+      <a href={sample.threshold_source.url} target="_blank" rel="noreferrer">U.S. FDA Daily Value and high threshold <ArrowUpRight size={14} aria-hidden="true"/></a>
+    </div>}
   </>;
 }
 

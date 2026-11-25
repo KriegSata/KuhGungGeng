@@ -1,12 +1,13 @@
-import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
 import type {CSSProperties, KeyboardEvent, ReactNode} from 'react';
-import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, Focus, Globe2, History, ImagePlus, Info, Lightbulb, Link2, LoaderCircle, MapPin, Maximize, MessageSquare, NotebookText, Ruler, Search, ShieldAlert, ShieldCheck, Sun, Trash2, Utensils, X} from 'lucide-react';
+import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, Compass, Crop, Focus, Globe2, History, ImageOff, ImagePlus, Info, LayoutGrid, Lightbulb, Link2, LoaderCircle, MapPin, Maximize, MessageSquare, Mountain, NotebookText, Ruler, Search, Shell, ShieldAlert, ShieldCheck, Sun, Trash2, Trees, Utensils, Waves, X} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import {animate} from 'animejs/animation';
 import {stagger} from 'animejs/utils';
 import {api, ApiError, startSession, validateFile} from './api';
 import type {Prediction, Source, Species} from './types';
 import SpeciesPhoto, {PhotoCredit, referencePhoto} from './SpeciesPhoto';
+import type {PhotoFeature} from './SpeciesPhoto';
 import NutritionDetails from './NutritionDetails';
 import CameraCapture from './CameraCapture';
 import {useScrollReveal} from './useScrollReveal';
@@ -21,11 +22,11 @@ const speciesRiskLabel = (toxicity?: string) => toxicity === 'toxic' ? 'Toxic sp
   toxicity === 'diet_related_risk_reported' ? 'Poisoning risk reported' : undefined;
 
 const habitatFilters = [
-  {label: 'Beach', pattern: /\bbeach(?:es)?\b/i},
-  {label: 'Mangrove', pattern: /\bmangroves?\b/i},
-  {label: 'Reef', pattern: /\breefs?\b/i},
-  {label: 'Rocky shore', pattern: /\brocky (?:intertidal )?shores?\b/i},
-  {label: 'Coastal & offshore', pattern: /\b(?:coastal (?:bottoms|seabeds|waters)|offshore|intertidal zone)\b/i},
+  {label: 'Beach', Icon: Waves, pattern: /\bbeach(?:es)?\b/i},
+  {label: 'Mangrove', Icon: Trees, pattern: /\bmangroves?\b/i},
+  {label: 'Reef', Icon: Shell, pattern: /\breefs?\b/i},
+  {label: 'Rocky shore', Icon: Mountain, pattern: /\brocky (?:intertidal )?shores?\b/i},
+  {label: 'Coastal & offshore', Icon: Compass, pattern: /\b(?:coastal (?:bottoms|seabeds|waters)|offshore|intertidal zone)\b/i},
 ] as const;
 type Habitat = typeof habitatFilters[number]['label'];
 
@@ -232,6 +233,7 @@ export default function App() {
   const [model, retryModel] = useResource<Model>('/model');
   const [search, setSearch] = useState('');
   const [habitat, setHabitat] = useState<Habitat | null>(null);
+  const [indexFiltered, setIndexFiltered] = useState(false);
   const [reviewError, setReviewError] = useState('');
   const [lastResult, setLastResult] = useState<Prediction>();
   const [returnTo, setReturnTo] = useState<{speciesId: string; observation: string}>();
@@ -259,7 +261,9 @@ export default function App() {
     </header>
     <main id="main" ref={main} tabIndex={-1} className="shell-main">
       {route === guide && <Atlas catalog={catalog} retryCatalog={retryCatalog} picker={picker}
-        search={search} setSearch={setSearch} habitat={habitat} setHabitat={setHabitat} onOpen={() => setReturnTo(undefined)}/>}
+        search={search} setSearch={value => {setIndexFiltered(true); setSearch(value);}}
+        habitat={habitat} setHabitat={value => {setIndexFiltered(true); setHabitat(value);}}
+        revealCards={!indexFiltered} onOpen={() => setReturnTo(undefined)}/>}
       {speciesId && (catalog.status !== 'ready'
         ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/>
         : selected
@@ -295,24 +299,37 @@ function BrandLink() {
   </a>;
 }
 
-function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHabitat, onOpen}: {
+function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHabitat, revealCards, onOpen}: {
   catalog: Resource<{items: Species[]}>; retryCatalog: () => void; picker: PhotoPickerProps;
   search: string; setSearch: (search: string) => void; habitat: Habitat | null; setHabitat: (habitat: Habitat | null) => void;
-  onOpen: () => void;
+  revealCards: boolean; onOpen: () => void;
 }) {
   const searchInput = useRef<HTMLInputElement>(null);
+  const mascot = useRef<HTMLImageElement>(null);
+  const hasPhoto = Boolean(picker.photo);
+  const previousHasPhoto = useRef(hasPhoto);
+  useLayoutEffect(() => {
+    const changed = previousHasPhoto.current !== hasPhoto;
+    previousHasPhoto.current = hasPhoto;
+    if (!changed || !mascot.current || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const motion = animate(mascot.current, {
+      x: [hasPhoto ? -28 : 28, 0], opacity: [hasPhoto ? 1 : .72, hasPhoto ? .72 : 1],
+      duration: 240, ease: 'out(3)',
+    });
+    return () => { motion.revert(); };
+  }, [hasPhoto]);
   const species = catalog.status === 'ready' ? catalog.data.items : [];
   const featured = species.find(item => item.id === 'portunus-pelagicus');
   const query = search.trim().toLowerCase();
   const habitatPattern = habitatFilters.find(filter => filter.label === habitat)?.pattern;
   const results = species.filter(item => (!habitatPattern || habitatPattern.test(item.habitat ?? '')) &&
     [item.english_name, item.scientific_name, ...(item.synonyms ?? []), ...item.names.map(name => name.name)].join(' ').toLowerCase().includes(query));
-  const speciesGrid = useScrollReveal(results.map(item => item.id).join(','));
+  const speciesGrid = useScrollReveal(results.map(item => item.id).join(','), revealCards);
 
   return <>
     <section className={featured ? 'atlas-opening' : 'atlas-opening atlas-opening-single'}>
-      <div className="atlas-intro">
-        <img className="atlas-mascot" src="/shellfie-mascot.webp" alt="" width="768" height="768"/>
+      <div className="atlas-intro" data-has-photo={hasPhoto}>
+        <img ref={mascot} className="atlas-mascot" src="/shellfie-mascot.webp" alt="" width="768" height="768"/>
         <h1>Crabs of the <em>Philippines</em></h1>
         <p>Find possible matches for your crab.</p>
         <PhotoPicker {...picker}/>
@@ -341,9 +358,13 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
         {catalog.status === 'ready' && <div className="atlas-habitats" role="group" aria-label="Filter by habitat">
           <span className="atlas-habitats-label" aria-hidden="true">Habitat</span>
           <div className="atlas-habitat-options">
-            <button type="button" aria-pressed={habitat === null} onClick={() => setHabitat(null)}>All habitats</button>
-            {habitatFilters.map(({label}) => <button key={label} type="button" aria-pressed={habitat === label}
-              onClick={() => setHabitat(label)}>{label}</button>)}
+            <button type="button" aria-pressed={habitat === null} onClick={() => setHabitat(null)}>
+              <LayoutGrid size={18} aria-hidden="true"/> All habitats
+            </button>
+            {habitatFilters.map(({label, Icon}) => <button key={label} type="button" data-habitat={label}
+              aria-pressed={habitat === label} onClick={() => setHabitat(label)}>
+              <Icon size={18} aria-hidden="true"/> {label}
+            </button>)}
           </div>
         </div>}
       </div>
@@ -382,10 +403,18 @@ type PhotoPickerProps = ReturnType<typeof usePhotoIdentification> & {model: Reso
 
 function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, onRemove, onSubmit, retake = false}: PhotoPickerProps & {retake?: boolean}) {
   const library = useRef<HTMLInputElement>(null);
+  const previewImage = useRef<HTMLImageElement>(null);
   const uploadButton = useRef<HTMLButtonElement>(null);
   const cameraButton = useRef<HTMLButtonElement>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const stages = {preparing: 'Preparing photo…', uploading: 'Uploading photo…', analyzing: 'Comparing species…'};
+
+  useLayoutEffect(() => {
+    if (retake || !preview || !previewImage.current || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const motion = animate(previewImage.current, {opacity: [.72, 1], y: [7, 0], duration: 220, ease: 'out(3)'});
+    return () => { motion.revert(); };
+  }, [preview, retake]);
+
   function select(input: HTMLInputElement) {
     if (input.files?.[0]) onFile(input.files[0]);
     input.value = '';
@@ -399,7 +428,7 @@ function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, o
     <input ref={library} type="file" accept="image/jpeg,image/png,image/webp" hidden
       aria-label="Choose crab photograph" onChange={event => select(event.currentTarget)}/>
     {photo && <figure className="capture-preview">
-      <img src={preview || undefined} alt="Your selected crab photograph"/>
+      <img ref={previewImage} src={preview || undefined} alt="Your selected crab photograph"/>
       <button type="button" className="capture-remove" aria-label="Remove photo" disabled={!!stage} onClick={() => {
         onRemove();
         (retake ? cameraButton : uploadButton).current?.focus({preventScroll: true});
@@ -434,9 +463,22 @@ function CaptureModelStatus({model, retryModel}: Pick<PhotoPickerProps, 'model' 
   return null;
 }
 
+const photoTipExamples = [
+  {id: 'framing', label: 'Framing', Icon: Crop, title: 'Too tightly framed',
+    alt: 'A close crop of the same ghost crab cuts off several legs.',
+    tip: 'Leave room around the shell, claws, and all the legs.'},
+  {id: 'focus', label: 'Focus', Icon: Focus, title: 'Details are blurry',
+    alt: 'The whole ghost crab is visible, but its shell markings and legs are blurry.',
+    tip: 'Tap the shell to set focus and hold your phone still.'},
+  {id: 'light', label: 'Light', Icon: Sun, title: 'Too little light',
+    alt: 'The whole ghost crab is visible in a dark photo, with shell markings hard to see.',
+    tip: 'Use even light so the shell markings are visible.'},
+] as const;
+
 function PhotoTips() {
   const exampleId = 'ocypode-ceratophthalma';
   const example = referencePhoto(exampleId);
+  const [issue, setIssue] = useState<(typeof photoTipExamples)[number]>(photoTipExamples[0]);
   const notes = useScrollReveal();
 
   return <article className="shell-page photo-tips">
@@ -456,12 +498,20 @@ function PhotoTips() {
           </div>
           <figcaption><h2>Whole crab in focus</h2><p>The shell markings are sharp, with room around the claws and legs.</p></figcaption>
         </figure>
-        <figure className="tips-photo tips-photo-retake">
+        <figure className="tips-photo tips-photo-retake" data-issue={issue.id}>
           <div className="tips-photo-frame">
-            <img src={example.src} width="960" height="720" alt="A dark, blurry close-up of the same crab, with most of its legs cut out of the frame."/>
+            <img src={example.src} width="960" height="720" alt={issue.alt}/>
             <span className="tips-verdict"><X size={16} aria-hidden="true"/> Retake</span>
           </div>
-          <figcaption><h2>Too close and blurry</h2><p>Cropping cuts off the legs. Dimming and blur hide the shell markings.</p></figcaption>
+          <figcaption>
+            <div className="tips-issue-options" role="group" aria-label="Choose a photo issue">
+              {photoTipExamples.map(option => <button key={option.id} type="button" aria-pressed={issue.id === option.id}
+                onClick={() => setIssue(option)}>
+                <option.Icon size={16} aria-hidden="true"/> {option.label}
+              </button>)}
+            </div>
+            <div aria-live="polite" aria-atomic="true"><h2>{issue.title}</h2><p>{issue.tip}</p></div>
+          </figcaption>
         </figure>
       </div>
       <p className="tips-credit"><PhotoCredit species={{id: exampleId}}/></p>
@@ -521,9 +571,9 @@ function SpeciesDetail({species, back}: {
     previousTab.current = activeTab;
     const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const panel = activePanel.current;
-    if (!motion || motion.matches || !panel) return;
+    if (!direction || !motion || motion.matches || !panel) return;
 
-    const enter = animate(panel, {opacity: [.4, 1], x: [direction * 16, 0], duration: 290, ease: 'out(3)'});
+    const enter = animate(panel, {opacity: [.82, 1], x: [direction * 8, 0], duration: 220, ease: 'out(3)'});
     const details = panel.querySelectorAll('.specimen-reveal, .nutrition-card, .species-source-grid > div');
     const reveal = details.length ? animate(details, {
       opacity: [.55, 1], y: [12, 0], delay: stagger(45, {start: 65}), duration: 310, ease: 'out(3)',
@@ -695,25 +745,47 @@ const observationPhotoExpired = (prediction: Prediction) => Date.now() >= (predi
 function ObservationPhoto({prediction, alt, lazy = false}: {prediction: Prediction; alt: string; lazy?: boolean}) {
   const [failed, setFailed] = useState(false);
   const expired = observationPhotoExpired(prediction);
-  if (failed || expired) return <div className="photo-unavailable">{expired ? 'Photo expired' : 'Photo unavailable'}</div>;
+  if (failed || expired) return <div className="photo-unavailable">
+    <ImageOff size={22} aria-hidden="true"/><span>{expired ? 'Photo expired' : 'Photo unavailable'}</span>
+  </div>;
   return <img src={observationPhotoUrl(prediction.upload_id)} alt={alt}
     loading={lazy ? 'lazy' : undefined} onError={() => setFailed(true)}/>;
 }
 
-function ComparisonPhoto({label, src, alt, unavailable}: {
-  label: string; src?: string; alt: string; unavailable: string;
+function ComparisonFeature({feature}: {feature: PhotoFeature}) {
+  const ring = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    if (!ring.current || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const motion = animate(ring.current, {scale: [.72, 1], duration: 200, ease: 'out(3)'});
+    return () => { motion.revert(); };
+  }, [feature]);
+
+  return <div className="comparison-feature-layer" aria-hidden="true">
+    <span ref={ring} className="comparison-feature-ring" style={{left: feature.x + '%', top: feature.y + '%'}}/>
+    <span className="comparison-feature-label">{feature.label}</span>
+  </div>;
+}
+
+function ComparisonPhoto({label, src, alt, unavailable, frameId, feature, onPhotoError}: {
+  label: string; src?: string; alt: string; unavailable: string; frameId?: string;
+  feature?: PhotoFeature; onPhotoError?: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const [failed, setFailed] = useState(false);
   const [enlarged, setEnlarged] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const available = src && !failed;
+  const featureStyle = feature && {'--feature-ratio': feature.aspectRatio} as CSSProperties;
+  const photo = <img src={src} alt={feature ? alt + '. ' + feature.description : alt}
+    onLoad={() => setLoaded(true)} onError={() => {setFailed(true); onPhotoError?.();}}/>;
 
   return <>
     <h3>{label}</h3>
-    <div className="comparison-frame">
+    <div className="comparison-frame" id={frameId} style={featureStyle}>
       {available ? <>
-        <img src={src} alt={alt} onError={() => setFailed(true)}/>
+        {photo}
+        {feature && loaded && <ComparisonFeature feature={feature}/>}
         <button type="button" className="comparison-expand" aria-label={`Enlarge ${label.toLowerCase()}`}
           onClick={() => {
             dialog.current?.showModal();
@@ -729,8 +801,12 @@ function ComparisonPhoto({label, src, alt, unavailable}: {
         <button type="button" ref={closeButton} className="comparison-dialog-close" aria-label="Close enlarged photo"
           onClick={() => dialog.current?.close()}><X size={21} aria-hidden="true"/></button>
       </header>
-      {enlarged && (available ? <img src={src} alt={alt} onError={() => setFailed(true)}/>
-        : <p className="photo-unavailable">{unavailable}</p>)}
+      {enlarged && (available ? (
+        feature ? <div className="comparison-frame" style={featureStyle}>
+          {photo}
+          {loaded && <ComparisonFeature feature={feature}/>}
+        </div> : photo
+      ) : <p className="photo-unavailable">{unavailable}</p>)}
     </dialog>
   </>;
 }
@@ -769,6 +845,9 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
   const [record, retry] = useResource<Prediction>(prediction ? null : '/predictions/' + id, true);
   const result = prediction ?? (record.status === 'ready' ? record.data : undefined);
   const [view, setView] = useState<'input' | 'reference'>(candidateId ? 'reference' : 'input');
+  const [showFeature, setShowFeature] = useState(false);
+  const [failedReferenceSrc, setFailedReferenceSrc] = useState<string>();
+  const referenceFrameId = useId();
   const retakePicker = usePhotoIdentification(onIdentified);
   if (!result) return <LoadState state={record} label="Loading the observation…" retry={retry}/>;
   const example = species.find(item => item.id === exampleFor(result.id));
@@ -779,6 +858,7 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
   const inputLabel = example ? 'Example photo' : 'Your photo';
   const expired = observationPhotoExpired(result);
   const referenceImage = reference && referencePhoto(reference.id);
+  const feature = referenceImage?.src !== failedReferenceSrc ? referenceImage?.feature : undefined;
   const trait = reference?.diagnostic_traits?.[0] || 'Compare the shape of the shell, claws, and legs you can see in both photos.';
   const photoTip = uncertainPhotoTip(result);
   const matches = result.candidates.map(item => {
@@ -813,7 +893,14 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
             const score = Math.round(item.confidence * 100);
             return <button className="match-candidate" key={item.species_id} type="button"
               aria-pressed={candidate.species_id === item.species_id}
-              onClick={() => {onSelect(item.species_id); setView('reference');}}>
+              onClick={() => {
+                if (item.species_id !== candidate.species_id) {
+                  setShowFeature(false);
+                  setFailedReferenceSrc(undefined);
+                }
+                onSelect(item.species_id);
+                setView('reference');
+              }}>
               <span className="match-species"><strong>{name}</strong>
                 {name !== scientificName && <i>{scientificName}</i>}
                 {riskLabel && <span className="match-risk" data-toxicity={toxicity}><ShieldAlert size={14} aria-hidden="true"/>{riskLabel}</span>}
@@ -824,8 +911,22 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
         </div>
         {matches.some(match => match.riskLabel) && <p className="match-risk-note">Safety badges describe the reference species shown on each card.</p>}
       </div>
+      <div className="comparison-cue">
+        <span className="comparison-cue-icon"><Focus size={23} aria-hidden="true"/></span>
+        <div aria-live="polite" aria-atomic="true"><h3>Look for</h3><p>{trait}</p></div>
+        {feature && <button type="button" className="comparison-feature-button" aria-pressed={showFeature}
+          aria-controls={referenceFrameId} onClick={() => {
+            setShowFeature(!showFeature);
+            if (!showFeature) setView('reference');
+          }}>
+          <Focus size={17} aria-hidden="true"/> Show this feature
+        </button>}
+      </div>
       <div className="comparison-switch" role="group" aria-label="Photo view">
-        <button type="button" aria-pressed={view === 'input'} onClick={() => setView('input')}>{inputLabel}</button>
+        <button type="button" aria-pressed={view === 'input'} onClick={() => {
+          setView('input');
+          setShowFeature(false);
+        }}>{inputLabel}</button>
         <button type="button" aria-pressed={view === 'reference'} onClick={() => setView('reference')}>Reference photo</button>
       </div>
       <div className="comparison-grid" data-view={view}>
@@ -837,12 +938,10 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
         </section>
         <section className="comparison-reference">
           <ComparisonPhoto key={candidate.species_id} label="Reference photo" src={referenceImage?.src}
-            alt={`${reference?.scientific_name ?? candidate.scientific_name} reference photograph`} unavailable="Reference photo unavailable"/>
+            alt={`${reference?.scientific_name ?? candidate.scientific_name} reference photograph`} unavailable="Reference photo unavailable"
+            frameId={referenceFrameId} feature={showFeature ? feature : undefined}
+            onPhotoError={() => {setShowFeature(false); setFailedReferenceSrc(referenceImage?.src);}}/>
         </section>
-      </div>
-      <div className="comparison-cue" aria-live="polite" aria-atomic="true">
-        <span className="comparison-cue-icon"><Focus size={23} aria-hidden="true"/></span>
-        <div><h3>Look for</h3><p>{trait}</p></div>
       </div>
       {(example || referenceImage || (reference && !overviewSpecies)) && <div className="comparison-footer">
         {(example || referenceImage) && <div className="comparison-credits">
@@ -938,10 +1037,14 @@ function ObservationCard({prediction, species, onDelete}: {
   const recordedAt = new Date(prediction.created_at * 1000);
   const headingId = 'observation-title-' + prediction.id;
   const statusId = 'observation-status-' + prediction.id;
+  const thumbnailId = 'observation-photo-' + prediction.id;
 
   return <article className="observation-card">
-    <a className="observation-card-link" href={observationLink(prediction.id)} aria-labelledby={headingId} aria-describedby={statusId}>
-      <div className="observation-thumb"><ObservationPhoto prediction={prediction} alt="" lazy/></div>
+    <a className="observation-card-link" href={observationLink(prediction.id)} aria-labelledby={headingId}
+      aria-describedby={observationPhotoExpired(prediction) ? statusId + ' ' + thumbnailId : statusId}>
+      <div className="observation-thumb specimen-photo-mat" id={thumbnailId}>
+        <ObservationPhoto prediction={prediction} alt="" lazy/>
+      </div>
       <div className="observation-card-copy">
         <span id={statusId} className="observation-status" data-match={!!candidate}>{status}</span>
         <h2 id={headingId}>{title}</h2>
