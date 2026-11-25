@@ -237,10 +237,13 @@ describe('Shellfie classroom demo', () => {
     history.replaceState(null, '', '/#/observations/' + result.id);
     render(<App/>);
     expect(await screen.findByText(threeSpot.diagnostic_traits[0])).toBeVisible();
+    const overview = () => within(screen.getByRole('region', {name: 'Selected species reference'}));
+    expect(overview().getByRole('heading', {name: threeSpot.english_name})).toBeVisible();
     fireEvent.click(screen.getByRole('button', {name: /Blue swimming crab/}));
     expect(screen.getByText(blue.diagnostic_traits[0])).toBeVisible();
     expect(screen.queryByText(threeSpot.diagnostic_traits[0])).not.toBeInTheDocument();
-    expect(screen.getByRole('link', {name: 'Open species profile'})).toHaveAttribute('href', '#/field-guide/' + blue.id);
+    expect(overview().getByRole('heading', {name: blue.english_name})).toBeVisible();
+    expect(overview().getByRole('link', {name: 'Full species profile'})).toHaveAttribute('href', '#/field-guide/' + blue.id);
 
     for (const [label, src] of [
       ['your photo', '/api/uploads/upload-id/image'], ['reference photo', '/images/species/portunus-pelagicus.jpg'],
@@ -258,6 +261,29 @@ describe('Shellfie classroom demo', () => {
     expect(screen.getByText('Reference photo unavailable')).toBeVisible();
     expect(screen.queryByRole('button', {name: 'Enlarge reference photo'})).not.toBeInTheDocument();
   });
+
+  it.each([[1, '100%'], [.9998, '>99.9%']] as const)(
+    'explains an exposure warning alongside a top model score of %s',
+    async (confidence, shownScore) => {
+      const candidates = [
+        {...result.candidates[0], confidence},
+        {...result.candidates[1], confidence: confidence === 1 ? 0 : .0002},
+      ];
+      mockApi({prediction: {...result, reason: 'poor_image_quality', quality_warnings: ['underexposed'], candidates}});
+      history.replaceState(null, '', '/#/observations/' + result.id);
+      render(<App/>);
+
+      expect(await screen.findByRole('heading', {name: 'Photo quality warning'})).toBeVisible();
+      expect(screen.getByText(/Three-spot swimming crab scored highest/)).toBeVisible();
+      const scores = within(screen.getByRole('group', {name: 'Model suggestions'}));
+      expect(scores.getByText(shownScore, {exact: true})).toBeVisible();
+      expect(scores.getByText(confidence === 1 ? '0%' : '<0.1%', {exact: true})).toBeVisible();
+      expect(screen.getByText(/how strongly the model favored each species it compares/)).toBeVisible();
+      expect(screen.getByRole('button', {name: 'Retake photo'})).toBeVisible();
+      const overview = within(await screen.findByRole('region', {name: 'Selected species reference'}));
+      expect(overview.getByRole('heading', {name: threeSpot.english_name})).toBeVisible();
+    },
+  );
 
   it('flags toxic and reported-risk candidates even when neither is selected', async () => {
     const floral = {...blue, id: 'atergatis-floridus', english_name: 'Floral egg crab', toxicity: 'toxic'};
@@ -327,24 +353,22 @@ describe('Shellfie classroom demo', () => {
   });
 
   it.each([['identified', 'Possible match'], ['insufficient_information', 'Match uncertain']])(
-    'uses consistent wording and shows the direct species facts only for %s',
+    'shows the selected species facts while preserving result wording for %s',
     async (status, title) => {
       mockApi({prediction: {...result, candidates: [result.candidates[1]], status, reason: status === 'identified' ? null : 'ambiguous_species'}});
       history.replaceState(null, '', '/#/observations/prediction-id');
       render(<App/>);
       expect(await screen.findByRole('heading', {name: title})).toBeInTheDocument();
       expect(within(screen.getByRole('group', {name: 'Model suggestions'})).getByRole('button')).toHaveTextContent('34%');
+      const reference = within(await screen.findByRole('region', {name: 'Selected species reference'}));
+      expect(reference.getByText('Reported food use')).toBeVisible();
+      expect(reference.getByText('A photo cannot confirm food safety.')).toBeVisible();
+      expect(reference.getByRole('link', {name: 'Full species profile'})).toBeVisible();
+      expect(screen.queryByRole('link', {name: 'Open species profile'})).not.toBeInTheDocument();
       if (status === 'identified') {
-        const reference = within(await screen.findByRole('region', {name: 'Selected species reference'}));
-        expect(reference.getByText('Reported food use')).toBeVisible();
-        expect(reference.getByText('A photo cannot confirm food safety.')).toBeVisible();
-        expect(reference.getByRole('link', {name: 'Full species profile'})).toBeVisible();
-        expect(screen.queryByRole('link', {name: 'Open species profile'})).not.toBeInTheDocument();
         expect(screen.queryByRole('heading', {name: 'Check another angle'})).not.toBeInTheDocument();
       } else {
-        expect(screen.queryByRole('region', {name: 'Selected species reference'})).not.toBeInTheDocument();
         expect(screen.getByRole('heading', {name: 'Check another angle'})).toBeVisible();
-        expect(screen.getByText('A photo cannot confirm food safety.')).toBeVisible();
       }
       expect(screen.queryByRole('button', {name: 'Retake photo'})).not.toBeInTheDocument();
     },

@@ -40,8 +40,12 @@ LAND_RISK = _source('seafdec-land-crab-risk', 'SEAFDEC: Toxic marine organisms o
                     'https://repository.seafdec.org/bitstream/handle/20.500.12066/5991/safis25.pdf?isAllowed=y&sequence=1')
 PH_CRAB_NAMES = _source('seafdec-1980', 'Motoh / SEAFDEC: Edible crustacea of the Philippines (1980)',
                         'https://repository.seafdec.org.ph/bitstream/handle/10862/152/ediblecrustacea.pdf?isAllowed=y&sequence=1')
+PALAWAN_NAMES = _source('subang-palawan-crab-names-2020', 'Subang et al.: Philippine crab names, table 1 (2020)',
+                        'https://www.vliz.be/imisdocs/publications/355655.pdf#page=5')
 FLORAL_LOCAL_NAME = _source('floral-agokoy', 'SeaLifeBase: Philippine name Agokoy for floral egg crab, citing Fresco (2002)',
                             'https://sealifebase.ca/ComNames/CommonNameSummary.php?autoctr=78835')
+DEVIL_LOCAL_NAMES = _source('devil-visayan-names', 'SeaLifeBase: Visayan names for devil crab',
+                            'https://sealifebase.org/comnames/CommonNamesList.php?genusname=Zosimus&id=21465&lang=vietnamese&speciesname=aeneus&stockcode=58438')
 GHOST_WORMS = _source('worms-ghost-crab', 'WoRMS: Accepted name of the horn-eyed ghost crab',
                       'https://www.marinespecies.org/aphia.php?id=207578&p=taxdetails')
 GHOST_REVISION = _source('davie-ghost-crab-2026', 'Davie et al.: Revision of the horn-eyed ghost crab complex (2026)',
@@ -77,14 +81,36 @@ def _facts(description, traits, habitat, distribution, size, color, similar, sou
 
 
 LOCAL_NAMES = {
-    'ocypode-ceratophthalma': ([('Agokoy', 'ceb'), ('Agoyokoy', 'ceb'), ('Alagokoy', 'ceb')], [PH_CRAB_NAMES]),
-    'cardisoma-carnifex': ([('Kuray', 'hil'), ('Kagang', 'ceb')], [PH_CRAB_NAMES]),
+    'scylla-serrata': ([('Lumayagan', 'ceb'), ('Suga-suga', 'ceb'), ('Kinis', 'und'), ('Bulik', 'und')],
+                      [_food(76), PALAWAN_NAMES, MANGROVE]),
+    'scylla-olivacea': ([('Suga-suga', 'ceb'), ('Pulahan', 'und')], [PALAWAN_NAMES, MANGROVE]),
+    'scylla-tranquebarica': ([('Suga-suga', 'ceb'), ('Lawodnon', 'und')], [PALAWAN_NAMES, MANGROVE]),
+    'portunus-pelagicus': ([('Kasag', 'ceb'), ('Lambay', 'ceb'), ('Lampay', 'ceb'), ('Dawat', 'ceb'), ('Suga-suga', 'ceb')],
+                          [_food(78), PALAWAN_NAMES]),
+    'portunus-sanguinolentus': ([('Suga-suga', 'ceb')], [_food(80), PALAWAN_NAMES]),
+    'charybdis-feriata': ([('San Francisco', 'ceb'), ('Kasag', 'ceb'), ('Corosan', 'hil'), ('Lambay', 'sur')],
+                         [_food(82), PALAWAN_NAMES]),
+    'ranina-ranina': ([('Mawik', 'ceb'), ('Kuracha', 'ceb'), ('Bacoco', 'sur')], [_food(72), PALAWAN_NAMES]),
+    'ocypode-ceratophthalma': ([('Agokoy', 'ceb'), ('Agoyokoy', 'ceb'), ('Alagokoy', 'ceb')], [_food(90)]),
+    'cardisoma-carnifex': ([('Kuray', 'hil'), ('Kagang', 'ceb'), ('Ung-kog', 'ceb')], [_food(96), PALAWAN_NAMES]),
     'atergatis-floridus': ([('Agokoy', 'Visayan')], [FLORAL_LOCAL_NAME]),
+    'zosimus-aeneus': ([('Kagang-bugton', 'Visayan'), ('Kagang', 'Visayan')], [DEVIL_LOCAL_NAMES, BFAR_REGION9]),
 }
 
-SHARED_NAME = {
-    'ocypode-ceratophthalma': dict(name='Agokoy', species_id='atergatis-floridus', species_name='floral egg crab', toxic=True),
-    'atergatis-floridus': dict(name='Agokoy', species_id='ocypode-ceratophthalma', species_name='horn-eyed ghost crab'),
+
+def _shared_name(name, species_id, species_name, *sources, toxic=False):
+    return dict(name=name, species_id=species_id, species_name=species_name, toxic=toxic), sources
+
+
+SHARED_NAMES = {
+    'ocypode-ceratophthalma': _shared_name(
+        'Agokoy', 'atergatis-floridus', 'floral egg crab', _food(90), FLORAL_LOCAL_NAME, toxic=True),
+    'atergatis-floridus': _shared_name(
+        'Agokoy', 'ocypode-ceratophthalma', 'horn-eyed ghost crab', _food(90), FLORAL_LOCAL_NAME),
+    'cardisoma-carnifex': _shared_name(
+        'Kagang', 'zosimus-aeneus', 'devil crab', _food(96), DEVIL_LOCAL_NAMES, BFAR_REGION9, toxic=True),
+    'zosimus-aeneus': _shared_name(
+        'Kagang', 'cardisoma-carnifex', 'mangrove land crab', _food(96), DEVIL_LOCAL_NAMES, BFAR_REGION9),
 }
 
 
@@ -226,7 +252,6 @@ def enrich(document):
     nutrition_sources = {sample['source']['id']: sample['source']
                          for sample in [nutrition, *nutrition['additional_samples']]} if nutrition else {}
     claim_sources['nutrition'] = list(nutrition_sources)
-    sources.update(nutrition_sources)
     updated = {**document, **facts, 'nutrition': nutrition, 'claim_sources': claim_sources,
                'reference_revision': 'species-facts-2026-11-25'}
     if identity == 'ocypode-ceratophthalma':
@@ -247,8 +272,10 @@ def enrich(document):
         updated['names'] = list(names.values())
         claim_sources['names'] = list(dict.fromkeys([*claim_sources.get('names', []), *(source['id'] for source in naming_sources)]))
         sources.update({source['id']: source for source in naming_sources})
-    if identity in SHARED_NAME:
-        updated['shared_local_name'] = SHARED_NAME[identity]
-        claim_sources['shared_local_name'] = [PH_CRAB_NAMES['id'], FLORAL_LOCAL_NAME['id']]
-        sources.update({source['id']: source for source in (PH_CRAB_NAMES, FLORAL_LOCAL_NAME)})
+    if identity in SHARED_NAMES:
+        shared_name, naming_sources = SHARED_NAMES[identity]
+        updated['shared_local_name'] = shared_name
+        claim_sources['shared_local_name'] = [source['id'] for source in naming_sources]
+        sources.update({source['id']: source for source in naming_sources})
+    sources.update(nutrition_sources)
     return {**updated, 'sources': list(sources.values())}

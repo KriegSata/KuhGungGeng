@@ -88,8 +88,25 @@ def test_shared_local_names_do_not_assign_the_same_toxicity():
     assert 'Agokoy' in {item['name'] for item in ghost['names']}
     assert 'floral-agokoy' in ghost['claim_sources']['shared_local_name']
     land = enrich(next(doc for doc in documents() if doc['id'] == 'cardisoma-carnifex'))
-    assert {'Kuray', 'Kagang'} <= {item['name'] for item in land['names']}
+    assert {'Kagang', 'Ung-kog'} <= {item['name'] for item in land['names'] if item['language'] == 'ceb'}
+    assert land['shared_local_name']['species_id'] == 'zosimus-aeneus'
+    assert land['shared_local_name']['toxic']
     assert land['toxicity'] == 'diet_related_risk_reported'
+
+
+def test_guide_keeps_cebuano_and_regional_visayan_names_distinct():
+    seed = Path(__file__).resolve().parents[1] / 'backend' / 'seed' / 'species.json'
+    catalog = {doc['id']: enrich(doc) for doc in [*documents(), *json.loads(seed.read_text(encoding='utf-8'))]}
+    for species_id, doc in catalog.items():
+        names = {(name['name'], name['language']) for name in doc['names'] if name['scope'] == 'vernacular'}
+        if species_id == 'hemigrapsus-sanguineus':
+            assert not names
+        elif species_id in {'zosimus-aeneus', 'atergatis-floridus'}:
+            assert {language for _, language in names} == {'Visayan'}
+        else:
+            assert any(language == 'ceb' for _, language in names)
+        if names:
+            assert set(doc['claim_sources']['names']) <= {source['id'] for source in doc['sources']}
 
 
 def test_asian_shore_crab_links_local_zinc_research_without_creating_a_food_profile():

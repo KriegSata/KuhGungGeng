@@ -115,17 +115,28 @@ function exampleFor(id: string) {
 
 function resultTitle(prediction: Prediction) {
   if (prediction.reason === 'model_unavailable') return 'Identification unavailable';
+  if (prediction.reason === 'poor_image_quality') return 'Photo quality warning';
   return prediction.status === 'identified' ? 'Possible match' : 'Match uncertain';
 }
 
-function resultMessage(prediction: Prediction) {
+function resultMessage(prediction: Prediction, topSuggestion?: string) {
   switch (prediction.reason) {
     case 'model_unavailable': return 'The identification model is unavailable. Browse the field guide to compare species.';
-    case 'poor_image_quality': return 'Photo quality made it harder to compare species.';
+    case 'poor_image_quality': return topSuggestion
+      ? `${topSuggestion} scored highest. Use a clearer photo to check the match.`
+      : 'Use a clearer photo to help identify the crab.';
     case 'ambiguous_species': return 'The model could not settle on one species.';
     case null: return 'Look at the same part of both crabs and compare what you can see.';
     default: return 'The model needs more information. Try another view of the crab.';
   }
+}
+
+function formatMatchScore(confidence: number) {
+  const percent = confidence * 100;
+  if (percent > 0 && percent < .1) return '<0.1%';
+  if (percent >= 99.95 && percent < 100) return '>99.9%';
+  if ((percent > 0 && percent < .5) || (percent >= 99.5 && percent < 100)) return percent.toFixed(1) + '%';
+  return Math.round(percent) + '%';
 }
 
 async function photoDimensions(file: File) {
@@ -560,8 +571,15 @@ function SpeciesDetail({species, back}: {
   const poisoningRisk = species.toxicity === 'diet_related_risk_reported';
   const warningTitle = toxic ? 'Toxic species' : 'Poisoning risk reported';
   const warningText = toxic ? 'Do not eat this crab, even if cooked.' : 'Toxin detection has been reported. Severity in people is unverified.';
-  const localNames = species.names.filter(name => name.scope === 'vernacular').map(name => name.name);
+  const localNames = species.names.filter(name => name.scope === 'vernacular');
+  const cebuanoNames = localNames.filter(name => name.language === 'ceb').map(name => name.name);
+  const visayanNames = localNames.filter(name => name.language === 'Visayan').map(name => name.name);
+  const otherNames = localNames.filter(name => name.language !== 'ceb' && name.language !== 'Visayan').map(name => name.name);
   const sharedName = species.shared_local_name;
+  const sharedNameNote = sharedName && <div className="specimen-name-note">
+    <BookOpen size={18} aria-hidden="true"/>
+    <p><strong>Shared local name</strong> <i>{sharedName.name}</i> is also used for the {sharedName.toxic && 'toxic '}<a href={speciesLink(sharedName.species_id)}>{sharedName.species_name}</a>. Use more than a local name to identify a crab.</p>
+  </div>;
   const warning = species.safety_warning && <p className="result-caution specimen-safety">
     <ShieldCheck size={20} aria-hidden="true"/>{species.safety_warning}
   </p>;
@@ -649,10 +667,7 @@ function SpeciesDetail({species, back}: {
           <dd>{value}</dd>
         </div>)}
       </dl>}
-      {sharedName && <div className="specimen-name-note">
-        <BookOpen size={18} aria-hidden="true"/>
-        <p><strong>Shared local name</strong> <i>{sharedName.name}</i> is also used for the {sharedName.toxic && 'toxic '}<a href={speciesLink(sharedName.species_id)}>{sharedName.species_name}</a>. Use more than a local name to identify a crab.</p>
-      </div>}
+      {sharedNameNote}
     </section>
     {warning}
   </div>;
@@ -662,12 +677,16 @@ function SpeciesDetail({species, back}: {
       {species.life_stage_notes && <p>{species.life_stage_notes}</p>}
       {!!species.lookalikes?.length && <><h3>Similar species</h3><p>{species.lookalikes.join(', ')}</p></>}
     </div>
-    <div className="specimen-reveal"><h2>Species notes</h2><dl>{[
+    <div className="specimen-reveal"><h2>Species notes</h2><dl>{([
+      ['Cebuano (Bisaya)', cebuanoNames.length ? <span lang="ceb">{cebuanoNames.join(', ')}</span> : 'No verified Cebuano name'],
+      ['Visayan names (regional)', visayanNames.join(', ')], ['Other Philippine names', otherNames.join(', ')],
       ['Habitat', species.habitat], ['Distribution', species.distribution], ['Reported size', species.size_range],
-      ['Coloration', species.coloration], ['Philippine names', localNames.join(', ')], ['Food use', species.edibility === 'reported_food_use' ? 'Reported food use' :
+      ['Coloration', species.coloration], ['Food use', species.edibility === 'reported_food_use' ? 'Reported food use' :
         species.edibility === 'not_recommended' ? 'Do not eat' : 'Unverified'],
       ['Toxicity', toxic ? 'Known toxic species' : species.toxicity === 'diet_related_risk_reported' ? 'Poisoning risk reported' : 'Unverified'],
-    ].filter(([,value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></div>
+    ] as const).filter(([,value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+      {sharedNameNote}
+    </div>
     {warning}
   </section>;
   const panels = [overview, information, <NutritionDetails species={species} standalone/>, <SpeciesSources species={species}/>];
@@ -827,13 +846,14 @@ function uncertainPhotoTip(result: Prediction) {
     return {title: 'The photo may be blurry', text: 'Steady your camera and tap the shell to focus. Keep the claws and legs in view.', retake: true};
   }
   if (warnings.includes('underexposed') || warnings.includes('overexposed')) {
-    return {title: 'Try softer, even light', text: 'Choose an angle where you can see the shell markings clearly, without glare or deep shadow.'};
+    return {title: 'Try softer, even light',
+      text: 'Choose an angle where you can see the shell markings clearly, without glare or deep shadow.', retake: true};
   }
   if (warnings.includes('low_resolution')) {
     return {title: 'Use a higher-resolution photo', text: 'Use the original photo so small details on the shell and claws stay visible.'};
   }
   if (result.candidates.length) {
-    return {title: 'Check another angle', text: 'Use the clue below the photos. If the feature is hidden, photograph the crab from another angle while keeping your distance.'};
+    return {title: 'Check another angle', text: 'Use the comparison clue. If the feature is hidden, photograph the crab from another angle while keeping your distance.'};
   }
   return {title: 'Frame the whole crab', text: 'Try a clear photo from above, with the shell, claws, and legs in view.'};
 }
@@ -853,7 +873,6 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
   const example = species.find(item => item.id === exampleFor(result.id));
   const candidate = result.candidates.find(item => item.species_id === candidateId) ?? result.candidates[0];
   const reference = candidate && species.find(item => item.id === candidate.species_id);
-  const overviewSpecies = result.status === 'identified' ? reference : undefined;
   const coverage = model.status === 'ready' && model.data.version === result.model_version ? model.data.species_ids?.length : undefined;
   const inputLabel = example ? 'Example photo' : 'Your photo';
   const expired = observationPhotoExpired(result);
@@ -872,7 +891,7 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
   return <article className="shell-page observation-page">
     <a className="back-link" href={observations}><ChevronLeft size={18}/> My observations</a>
     <h1>{resultTitle(result)}</h1>
-    <p className="shell-lead">{resultMessage(result)}</p>
+    <p className="shell-lead">{resultMessage(result, matches[0]?.name)}</p>
     {result.experimental && <p className="model-summary">Experimental model{coverage ? ` · Compares ${coverage} species` : ''}</p>}
     {photoTip && <section className="result-photo-tip" aria-labelledby="result-photo-tip-heading">
       <span className="result-photo-tip-icon"><Lightbulb size={21} aria-hidden="true"/></span>
@@ -886,11 +905,14 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
       <div className="match-panel">
         <div className="match-panel-heading">
           <h2 id="comparison-heading">Possible matches</h2>
-          <p id="match-score-note">Model scores<span className="visually-hidden">. Select a species to compare photos.</span></p>
+          <p>Model scores</p>
         </div>
-        <div className="comparison-candidates" role="group" aria-label="Model suggestions" aria-describedby="match-score-note">
+        {(result.experimental || result.reason === 'poor_image_quality') && <p className="match-score-note" id="match-score-note">
+          Scores show how strongly the model favored each species it compares. Photo quality is checked separately.
+        </p>}
+        <div className="comparison-candidates" role="group" aria-label="Model suggestions"
+          aria-describedby={result.experimental || result.reason === 'poor_image_quality' ? 'match-score-note' : undefined}>
           {matches.map(({item, name, scientificName, toxicity, riskLabel}) => {
-            const score = Math.round(item.confidence * 100);
             return <button className="match-candidate" key={item.species_id} type="button"
               aria-pressed={candidate.species_id === item.species_id}
               onClick={() => {
@@ -905,7 +927,7 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
                 {name !== scientificName && <i>{scientificName}</i>}
                 {riskLabel && <span className="match-risk" data-toxicity={toxicity}><ShieldAlert size={14} aria-hidden="true"/>{riskLabel}</span>}
               </span>
-              <span className="match-score"><span className="visually-hidden">Model score </span>{score}%</span>
+              <span className="match-score"><span className="visually-hidden">Model score </span>{formatMatchScore(item.confidence)}</span>
             </button>;
           })}
         </div>
@@ -943,14 +965,11 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
             onPhotoError={() => {setShowFeature(false); setFailedReferenceSrc(referenceImage?.src);}}/>
         </section>
       </div>
-      {(example || referenceImage || (reference && !overviewSpecies)) && <div className="comparison-footer">
-        {(example || referenceImage) && <div className="comparison-credits">
+      {(example || referenceImage) && <div className="comparison-footer">
+        <div className="comparison-credits">
           {example && <p>{inputLabel} · {example.english_name} · <PhotoCredit species={example}/></p>}
           {referenceImage && reference && <p>Reference photo · <PhotoCredit species={reference}/></p>}
-        </div>}
-        {reference && !overviewSpecies && <a className="atlas-action" href={speciesLink(reference.id)} onClick={() => onSpecies(reference.id)}>
-          Open species profile <ArrowRight size={18} aria-hidden="true"/>
-        </a>}
+        </div>
       </div>}
     </section>}
     {!candidate && <>
@@ -964,9 +983,9 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
     </>}
     {result.reason === 'poor_image_quality' && candidate && !photoTip?.retake && <a className="secondary" href={guide}>Try another photo</a>}
     <div className="observation-overview">
-      {overviewSpecies && <SpeciesFacts key={overviewSpecies.id} species={overviewSpecies} onMore={() => onSpecies(overviewSpecies.id)}/>}
+      {reference && <SpeciesFacts key={reference.id} species={reference} onMore={() => onSpecies(reference.id)}/>}
       <div className="observation-support">
-        {!overviewSpecies && <ObservationSafetyNote/>}
+        {!reference && <ObservationSafetyNote/>}
         <ResultDisclosure label="Model details and photo tips" icon={Info}>
           <h2>What the scores mean</h2>
           <p>{result.confidence_explanation}</p>

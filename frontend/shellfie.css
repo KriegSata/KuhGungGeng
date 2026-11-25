@@ -614,6 +614,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .match-panel-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 13px; margin-bottom: 12px; }
 .match-panel-heading h2 { font-size: clamp(21px, 2.5vw, 28px); }
 .match-panel-heading p { margin: 0; padding-inline-start: 12px; border-inline-start: 1px solid var(--control-line); color: var(--muted); font-size: 14px; }
+.match-score-note { margin: -5px 0 12px; color: var(--muted); font-size: 14px; line-height: 1.4; }
 .comparison-candidates { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: 9px; }
 .match-candidate, .comparison-switch button { min-height: 44px; text-align: left; background: var(--surface); border: 1px solid var(--control-line); border-radius: 12px; color: var(--ink); padding: 9px 12px; }
 .match-candidate {
