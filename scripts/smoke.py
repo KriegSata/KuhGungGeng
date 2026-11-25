@@ -22,7 +22,7 @@ def main():
     Path('data').mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(dir='data',prefix='smoke-') as directory:
         root=Path(directory).resolve()
-        env={**os.environ,'APP_ENV':'development','DATA_DIR':str(root),'DATABASE_URL':f'sqlite:///{root / "smoke.db"}','MODEL_MANIFEST':'','CLAMAV_HOST':''}
+        env={**os.environ,'APP_ENV':'development','DATA_DIR':str(root),'DATABASE_URL':f'sqlite:///{root / "smoke.db"}','MODEL_MANIFEST':'','EXPERIMENTAL_CLASSIFIER':'','USE_BUNDLED_CLASSIFIER':'false','CLAMAV_HOST':''}
         try:
             with (root/'api.log').open('w') as api_log, (root/'web.log').open('w') as web_log:
                 processes.append(subprocess.Popen([sys.executable,'-m','uvicorn','backend.main:app','--host','127.0.0.1','--port','8000'],env=env,stdout=api_log,stderr=subprocess.STDOUT,creationflags=flags))
@@ -36,7 +36,7 @@ def main():
                         time.sleep(.5)
                     else: raise RuntimeError('Smoke servers did not become ready')
                     response=client.get('/')
-                    assert response.status_code==200 and 'KuhGungGeng' in response.text
+                    assert response.status_code==200 and 'Shellfie' in response.text
                     client.headers['X-CSRF-Token']=client.get('/api/session').json()['csrf_token']
                     assert len(client.get('/api/species').json()['items'])==6
                     stream=io.BytesIO();Image.new('RGB',(640,480),'green').save(stream,'JPEG')

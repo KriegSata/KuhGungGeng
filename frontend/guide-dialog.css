@@ -2,28 +2,127 @@
 .candidate-names strong { font-size: 22px; font-weight: 600; }
 .candidate-names em { font-size: 20px; color: #5b7156; }
 .candidate > .candidate-score { font-size: 14px; }
-.species-name-pair { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 15px; margin-bottom: 20px; }
-.species-name-pair h3 { margin: 0; }
-.species-name-pair em { font-size: 19px; color: #5b7156; }
-.species-description { line-height: 1.7; max-width: 850px; }
-.nutrition-section { margin-block: 24px; padding-top: 24px; border-top: 1px solid #dce4d3; }
-.nutrition-section h4 { font-size: 23px; font-weight: 600; margin: 0 0 12px; }
-.nutrition-section .nutrition-basis { font-size: 15px; color: #5e705b; margin-bottom: 18px; }
-.nutrition-cholesterol { padding: 20px; border: 1px solid #d5decd; border-radius: 12px; background: #f1f5eb; margin-bottom: 20px; }
-.nutrition-cholesterol > div { display: flex; gap: 15px; justify-content: space-between; align-items: baseline; flex-wrap: wrap; }
-.nutrition-cholesterol strong { font-size: 28px; }
-.cholesterol-label { display: block; font-size: 15px; margin-top: 8px; }
-.nutrition-cholesterol.high { border-color: #d8877d; color: #9b2524; background: #fff0ed; }
+.nutrition-section {
+  container-type: inline-size;
+  margin-block: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+}
+.nutrition-section :is(h3, h4) { font-size: 21px; font-weight: 700; margin: 0 0 10px; }
+.nutrition-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.nutrition-heading :is(h2, h3) { margin: 0; }
+.nutrition-serving {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 15px;
+}
+.nutrition-serving span { color: var(--muted); }
+.nutrition-section .nutrition-basis { margin: 12px 0 6px; font-size: 16px; color: var(--muted); }
+.nutrition-sample-source { margin-bottom: 14px; overflow-wrap: anywhere; }
+.nutrition-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(8px, 2cqi, 16px); }
+.nutrition-cards > .nutrition-card {
+  --nutrient-color: #54319a;
+  --nutrient-tint: #efe5ff;
+  --nutrient-surface: #f9f5ff;
+  min-width: 0;
+  padding: clamp(10px, 2.5cqi, 20px);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--nutrient-surface);
+}
+.nutrition-cards > .nutrition-card-energy { --nutrient-color: #884200; --nutrient-tint: #ffe7b1; --nutrient-surface: #fffbf2; }
+.nutrition-cards > .nutrition-card-protein { --nutrient-color: #2041ad; --nutrient-tint: #dce6ff; --nutrient-surface: #f2f6ff; }
+.nutrition-cards > .nutrition-card-fat { --nutrient-color: #136553; --nutrient-tint: #d6f2e6; --nutrient-surface: #f2fbf7; }
+.nutrition-cards > .nutrition-cholesterol.high {
+  --nutrient-color: #922d39;
+  --nutrient-tint: #f9d9dd;
+  --nutrient-surface: #fff4f4;
+  border-color: #e8bdc5;
+}
+.nutrition-card dt { margin: 0 0 8px; color: var(--ink); font-size: 15px; font-weight: 700; }
+.nutrition-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 12px;
+  border-radius: 11px;
+  color: var(--nutrient-color);
+  background: var(--nutrient-tint);
+}
+.nutrition-card dd { color: var(--ink); line-height: 1.22; }
+.nutrition-card .nutrition-value { font-size: clamp(24px, 4.5cqi, 40px); font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+.nutrition-value span { font-size: 15px; font-weight: 650; letter-spacing: 0; }
+.nutrition-card .nutrition-missing { font-size: 15px; color: var(--muted); }
+.nutrition-card .nutrition-estimate { margin-top: 6px; font-size: 13px; color: var(--muted); }
+.nutrition-card .cholesterol-label { margin-top: 8px; font-size: 13px; line-height: 1.4; color: var(--nutrient-color); }
 .nutrition-cholesterol.high .cholesterol-label { font-weight: 700; }
-.nutrient-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.nutrient-grid > div { padding: 0 0 12px; }
-.nutrient-grid dt { font-size: 14px; color: #5e705b; }
-.nutrient-grid dd { font-size: 23px; color: #253b35; }
-.nutrient-grid dd span { font-size: 15px; }
-.nutrition-section .nutrition-note, .nutrition-section .nutrition-unknown { font-size: 15px; color: #5e705b; }
+.nutrient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 154px), 1fr));
+  gap: 0 18px;
+  margin-top: 12px;
+}
+.nutrient-grid > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 10px; padding: 10px 0; font-size: 15px; }
+.nutrient-grid dt { margin: 0; color: var(--muted); }
+.nutrient-grid dd { color: var(--ink); font-weight: 650; line-height: inherit; }
+.nutrition-section .nutrition-note, .nutrition-section .nutrition-unknown { font-size: 15px; color: var(--muted); }
 .nutrition-section .nutrition-note { margin-top: 16px; }
 .nutrition-sources { display: grid; gap: 10px; font-size: 14px; line-height: 1.5; }
-@media (max-width: 680px) { .nutrient-grid { grid-template-columns: 1fr 1fr; } .candidate-names strong { font-size: 20px; } }
+.nutrition-sources a, .nutrition-warning a { width: fit-content; color: inherit; text-underline-offset: 3px; }
+.nutrition-sources a svg, .nutrition-warning a svg { display: inline; vertical-align: text-bottom; }
+.nutrition-sources { color: var(--deep-blue); }
+.nutrition-vitamins { margin-top: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--soft-blue); }
+.nutrition-group-label { margin: 0; color: var(--ink); font-size: 16px; font-weight: 700; }
+.nutrition-vitamins .nutrient-grid { margin-top: 4px; }
+.nutrition-vitamins .nutrition-unknown { margin: 5px 0 0; }
+.nutrition-evidence { display: grid; max-width: 740px; gap: 10px; margin-top: 12px; padding: 16px clamp(14px, 3cqi, 22px); border: 1px solid var(--line); border-radius: 14px; background: var(--soft-blue); }
+.nutrition-evidence :is(h3, h4, p) { margin: 0; }
+.nutrition-evidence .nutrition-sources { margin-top: 4px; }
+.nutrition-sample-list { margin-top: 24px; }
+.nutrition-sample { overflow: hidden; margin-top: 8px; padding: 0; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); }
+.nutrition-sample summary { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; list-style: none; }
+.nutrition-sample[open] > summary { margin-bottom: 0; }
+.nutrition-sample summary::-webkit-details-marker { display: none; }
+.nutrition-sample summary:focus-visible { outline: 2px solid var(--blue); outline-offset: -3px; border-radius: 12px; }
+.nutrition-sample summary:hover { background: var(--soft-blue); }
+.nutrition-sample summary > span:first-child { flex: 1; min-width: 0; }
+.nutrition-sample summary span span { display: block; color: var(--muted); font-size: 13px; }
+.nutrition-sample summary > svg { flex: none; color: var(--deep-blue); }
+.nutrition-sample[open] summary > svg { transform: rotate(180deg); }
+.nutrition-sample-score { padding: 4px 9px; border-radius: 8px; background: var(--plate); text-align: right; white-space: nowrap; }
+.nutrition-sample-content { padding: 16px; border-top: 1px solid var(--line); }
+.nutrition-cards.nutrition-cards-supplement { grid-template-columns: minmax(0, 280px); }
+.nutrition-takeaways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
+.nutrition-takeaways > div { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.nutrition-takeaways > div:first-child { background: #f2fbf7; }
+.nutrition-takeaways > div:nth-child(2) { background: #fffbf2; }
+.nutrition-takeaways p, .nutrition-warning p { margin: 0; font-size: 15px; line-height: 1.5; }
+.nutrition-warning { display: flex; align-items: flex-start; gap: 14px; margin-top: 14px; padding: clamp(14px, 3cqi, 22px); border: 1px solid #e4c37c; border-radius: 14px; background: #fff3d7; color: #543307; }
+.nutrition-warning[data-toxic="true"] { border-color: #7250a4; background: #2c1949; color: white; }
+.nutrition-warning-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 10px; background: #ffe6a9; }
+.nutrition-warning[data-toxic="true"] .nutrition-warning-icon { background: #493169; color: #dbf7ad; }
+.nutrition-warning a { display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 700; }
+.nutrition-warning .nutrition-sources { margin-top: 12px; gap: 6px; color: inherit; }
+.nutrition-warning .nutrition-sources a { margin-top: 0; font-weight: 600; }
+@container (max-width: 575px) {
+  .nutrition-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nutrition-takeaways { grid-template-columns: 1fr; }
+}
+@container (max-width: 360px) {
+  .nutrition-sample summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; padding: 11px; }
+  .nutrition-sample summary > svg { grid-area: 1 / 2; }
+  .nutrition-sample-score { justify-self: start; text-align: left; }
+  .nutrition-sample summary .nutrition-sample-score span { display: inline; margin-inline-end: 6px; }
+}
+@media (max-width: 680px) { .candidate-names strong { font-size: 20px; } }
 .guide-tools { display: flex; align-items: center; gap: 24px; margin: 28px 0 32px; }
 .guide-tools .search { flex: 1; margin: 0; max-width: 640px; border-radius: 12px; }
 .guide-tools > span { font-size: 15px; color: #5e705b; white-space: nowrap; }
@@ -47,8 +146,7 @@
 .photo-card em { font-size: 16px; }
 .photo-card p { font-size: 16px; line-height: 1.6; margin-block: 16px; }
 .photo-card .text-button { margin-top: auto; }
-.toxicity-badge { position: absolute; top: 15px; left: 15px; display: flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 30px; background: #fff2e7; color: #8a4427; font-size: 13px; font-weight: 600; box-shadow: 0 3px 12px #0002; }
-.reopen-result { margin-top: 24px; margin-bottom: 64px; }
+.reopen-result { margin-top: 24px; }
 .prediction-dialog { width: min(900px, calc(100vw - 48px)); max-width: 900px; max-height: calc(100dvh - 64px); padding: 0; border: 1px solid #d9e1d2; border-radius: 22px; background: #fff; color: #253b35; box-shadow: 0 30px 100px #102b3655; overflow-y: auto; overscroll-behavior: contain; }
 .prediction-dialog::backdrop { background: #142d2ac4; backdrop-filter: blur(6px); }
 .dialog-content { width: 100%; }

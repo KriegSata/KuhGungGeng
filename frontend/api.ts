@@ -1,5 +1,11 @@
 let csrf = '';
 let sessionPromise:Promise<void>|null = null;
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
+}
+
 export async function api<T>(path:string, init:RequestInit = {}, adminKey?:string):Promise<T> {
   const headers = new Headers(init.headers);
   if (init.body && !(init.body instanceof FormData)) headers.set('Content-Type','application/json');
@@ -8,7 +14,7 @@ export async function api<T>(path:string, init:RequestInit = {}, adminKey?:strin
   const response = await fetch(`/api${path}`, {...init, headers, credentials:'include'});
   if (!response.ok) {
     const payload = await response.json().catch(()=>null);
-    throw new Error(payload?.error?.message || `Request failed (${response.status})`);
+    throw new ApiError(payload?.error?.message || `Request failed (${response.status})`, response.status);
   }
   return response.status === 204 ? undefined as T : response.json();
 }

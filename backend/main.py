@@ -76,7 +76,7 @@ def create_app(settings: Settings | None = None):
         yield
         engine.dispose()
 
-    app = FastAPI(title="KuhGungGeng API", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="Shellfie API", version="0.1.0", lifespan=lifespan)
     app.add_middleware(CORSMiddleware, allow_origins=settings.origins, allow_credentials=True,
                        allow_methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type", "X-CSRF-Token", "X-Admin-Key"])
 
@@ -240,6 +240,7 @@ def create_app(settings: Settings | None = None):
                 for candidate in result["candidates"]:
                     document = db.get(Species, candidate["species_id"]).document
                     candidate.update({"scientific_name": document["scientific_name"], "english_name": document["english_name"], "names": document["names"],
+                                      "toxicity": document.get("toxicity", "unknown"),
                                       "knowledge_revision": document["revision"], "sources": document["sources"], "last_reviewed": document["last_reviewed"]})
                 identity = str(uuid.uuid4())
                 result.update({"id": identity, "request_id": request.state.request_id, "upload_id": item.id,

@@ -87,7 +87,14 @@
     "license": "CC BY 4.0",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
     "title": "Ocypode ceratophthalmus 140811471.jpg",
-    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards.",
+    "feature": {
+      "label": "Eyestalk horn",
+      "description": "The horn extends above the eye on the right side of the reference photo.",
+      "x": 59.4,
+      "y": 19.6,
+      "aspectRatio": 1.3333333333
+    }
   },
   "portunus-sanguinolentus": {
     "src": "/images/species/portunus-sanguinolentus.jpg",
@@ -96,7 +103,14 @@
     "license": "CC BY 4.0",
     "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
     "title": "Portunus sanguinolentus 115960522.jpg",
-    "changes": "Wikimedia thumbnail; displayed with crop on guide cards."
+    "changes": "Wikimedia thumbnail; displayed with crop on guide cards.",
+    "feature": {
+      "label": "Middle shell spot",
+      "description": "The ring marks the middle dark spot. The other two sit to either side along the rear of the shell.",
+      "x": 50.9,
+      "y": 50.4,
+      "aspectRatio": 1.5
+    }
   },
   "ranina-ranina": {
     "src": "/images/species/ranina-ranina.jpg",
