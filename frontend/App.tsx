@@ -369,7 +369,6 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
           </label>
         </div>
         {catalog.status === 'ready' && <div className="atlas-habitats" role="group" aria-label="Filter by habitat">
-          <span className="atlas-habitats-label" aria-hidden="true">Habitat</span>
           <div className="atlas-habitat-options">
             <button type="button" aria-expanded={habitatsOpen} aria-controls={habitatOptionsId}
               onClick={() => setHabitatsOpen(open => !open)}>
