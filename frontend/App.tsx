@@ -21,6 +21,29 @@ const words = (value: string) => value.replaceAll('_', ' ');
 const speciesRiskLabel = (toxicity?: string) => toxicity === 'toxic' ? 'Toxic species' :
   toxicity === 'diet_related_risk_reported' ? 'Poisoning risk reported' : undefined;
 
+const crabPrompts = [
+  'Think you know your crab? See if you can identify it!',
+  'Can you identify this crab? Explore the possibilities!',
+  'Put your crab-spotting skills to the test and nail the ID!',
+  'Mystery crab! Can you crack the case and identify it?',
+  'Name that crab! Discover what it could be.',
+  "Got a crab? Let's figure out what it is!",
+  "Discover your crab's identity and start identifying!",
+  "Uncover your crab's identity by exploring the possibilities.",
+  'Ready to identify your crab? Check out what it might be.',
+  'ID that crab!',
+  'Crab ID: Name your catch!',
+  'Which crab is yours? Find out now!',
+  'Spot the crab, solve the puzzle, get the ID.',
+  'Your crab has a name. Can you find it?',
+  'Take the crab challenge and identify your catch.',
+  'One crab, many possibilities. Which one is it?',
+  "Play detective and track down your crab's identity.",
+  'See a crab, name a crab, ID a crab.',
+  'Your crab identification quest starts here!',
+  'Compare, discover, and identify your crab.',
+];
+
 const habitatFilters = [
   {label: 'Beach', Icon: Waves, pattern: /\bbeach(?:es)?\b/i},
   {label: 'Mangrove', Icon: Trees, pattern: /\bmangroves?\b/i},
@@ -316,6 +339,7 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
   revealCards: boolean; onOpen: () => void;
 }) {
   const searchInput = useRef<HTMLInputElement>(null);
+  const [crabPrompt] = useState(() => crabPrompts[Math.floor(Math.random() * crabPrompts.length)]);
   const [habitatsOpen, setHabitatsOpen] = useState(false);
   const habitatOptionsId = useId();
   const mascot = useRef<HTMLImageElement>(null);
@@ -344,7 +368,7 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
       <div className="atlas-intro" data-has-photo={hasPhoto}>
         <img ref={mascot} className="atlas-mascot" src="/shellfie-mascot.webp" alt="" width="768" height="768"/>
         <h1>Crabs of the <em>Philippines</em></h1>
-        <p>Find possible matches for your crab.</p>
+        <p>{crabPrompt}</p>
         <PhotoPicker {...picker}/>
       </div>
       {featured && <div className="atlas-feature">
