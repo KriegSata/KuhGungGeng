@@ -278,7 +278,6 @@ describe('Shellfie classroom demo', () => {
       const scores = within(screen.getByRole('group', {name: 'Model suggestions'}));
       expect(scores.getByText(shownScore, {exact: true})).toBeVisible();
       expect(scores.getByText(confidence === 1 ? '0%' : '<0.1%', {exact: true})).toBeVisible();
-      expect(screen.getByText(/how strongly the model favored each species it compares/)).toBeVisible();
       expect(screen.getByRole('button', {name: 'Retake photo'})).toBeVisible();
       const overview = within(await screen.findByRole('region', {name: 'Selected species reference'}));
       expect(overview.getByRole('heading', {name: threeSpot.english_name})).toBeVisible();
@@ -362,7 +361,6 @@ describe('Shellfie classroom demo', () => {
       expect(within(screen.getByRole('group', {name: 'Model suggestions'})).getByRole('button')).toHaveTextContent('34%');
       const reference = within(await screen.findByRole('region', {name: 'Selected species reference'}));
       expect(reference.getByText('Reported food use')).toBeVisible();
-      expect(reference.getByText('A photo cannot confirm food safety.')).toBeVisible();
       expect(reference.getByRole('link', {name: 'Full species profile'})).toBeVisible();
       expect(screen.queryByRole('link', {name: 'Open species profile'})).not.toBeInTheDocument();
       if (status === 'identified') {

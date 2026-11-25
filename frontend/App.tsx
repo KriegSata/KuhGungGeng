@@ -873,7 +873,6 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
   const example = species.find(item => item.id === exampleFor(result.id));
   const candidate = result.candidates.find(item => item.species_id === candidateId) ?? result.candidates[0];
   const reference = candidate && species.find(item => item.id === candidate.species_id);
-  const coverage = model.status === 'ready' && model.data.version === result.model_version ? model.data.species_ids?.length : undefined;
   const inputLabel = example ? 'Example photo' : 'Your photo';
   const expired = observationPhotoExpired(result);
   const referenceImage = reference && referencePhoto(reference.id);
@@ -892,7 +891,6 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
     <a className="back-link" href={observations}><ChevronLeft size={18}/> My observations</a>
     <h1>{resultTitle(result)}</h1>
     <p className="shell-lead">{resultMessage(result, matches[0]?.name)}</p>
-    {result.experimental && <p className="model-summary">Experimental model{coverage ? ` · Compares ${coverage} species` : ''}</p>}
     {photoTip && <section className="result-photo-tip" aria-labelledby="result-photo-tip-heading">
       <span className="result-photo-tip-icon"><Lightbulb size={21} aria-hidden="true"/></span>
       <div>
@@ -901,17 +899,9 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
       </div>
       {photoTip.retake && <PhotoPicker {...retakePicker} model={model} retryModel={retryModel} retake/>}
     </section>}
-    {candidate && <section className="comparison" aria-labelledby="comparison-heading">
+    {candidate && <section className="comparison" aria-label="Species comparison">
       <div className="match-panel">
-        <div className="match-panel-heading">
-          <h2 id="comparison-heading">Possible matches</h2>
-          <p>Model scores</p>
-        </div>
-        {(result.experimental || result.reason === 'poor_image_quality') && <p className="match-score-note" id="match-score-note">
-          Scores show how strongly the model favored each species it compares. Photo quality is checked separately.
-        </p>}
-        <div className="comparison-candidates" role="group" aria-label="Model suggestions"
-          aria-describedby={result.experimental || result.reason === 'poor_image_quality' ? 'match-score-note' : undefined}>
+        <div className="comparison-candidates" role="group" aria-label="Model suggestions">
           {matches.map(({item, name, scientificName, toxicity, riskLabel}) => {
             return <button className="match-candidate" key={item.species_id} type="button"
               aria-pressed={candidate.species_id === item.species_id}
@@ -931,7 +921,6 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
             </button>;
           })}
         </div>
-        {matches.some(match => match.riskLabel) && <p className="match-risk-note">Safety badges describe the reference species shown on each card.</p>}
       </div>
       <div className="comparison-cue">
         <span className="comparison-cue-icon"><Focus size={23} aria-hidden="true"/></span>
@@ -985,7 +974,6 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
     <div className="observation-overview">
       {reference && <SpeciesFacts key={reference.id} species={reference} onMore={() => onSpecies(reference.id)}/>}
       <div className="observation-support">
-        {!reference && <ObservationSafetyNote/>}
         <ResultDisclosure label="Model details and photo tips" icon={Info}>
           <h2>What the scores mean</h2>
           <p>{result.confidence_explanation}</p>
@@ -995,7 +983,6 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
           {result.suggested_photos.length > 0 && <ul className="photo-angle-list">{result.suggested_photos.map(angle =>
             <li key={angle}>{photoAngleLabels[angle] ?? words(angle)}</li>)}</ul>}
           <p>{result.safety_disclaimer}</p>
-          <small>Model {result.model_version}</small>
         </ResultDisclosure>
         <Correction species={species} prediction={result}/>
       </div>
@@ -1137,10 +1124,6 @@ function ObservationHistory({species, onDelete}: {species: Species[]; onDelete: 
   </section>;
 }
 
-function ObservationSafetyNote() {
-  return <p className="observation-safety-note"><ShieldCheck size={17} aria-hidden="true"/> A photo cannot confirm food safety.</p>;
-}
-
 function SpeciesFacts({species, onMore}: {species: Species; onMore: () => void}) {
   const edibility = {
     reported_food_use: 'Reported food use',
@@ -1163,7 +1146,6 @@ function SpeciesFacts({species, onMore}: {species: Species; onMore: () => void})
   return <section className="species-facts" aria-label="Selected species reference">
     <header className="observation-facts-header">
       <div>
-        <p className="observation-facts-label"><BookOpen size={16} aria-hidden="true"/> Selected reference</p>
         <h2>{species.english_name}</h2>
         <p className="observation-facts-latin">{species.scientific_name}</p>
       </div>
@@ -1178,7 +1160,6 @@ function SpeciesFacts({species, onMore}: {species: Species; onMore: () => void})
           <dt><span><Icon size={18} aria-hidden="true"/></span>{label}</dt><dd>{value}</dd>
         </div>)}
       </dl>
-      <ObservationSafetyNote/>
       <div className="observation-facts-extras">
         {species.nutrition && !hasPoisoningWarning ? <ResultDisclosure label="Nutrition reference" icon={Utensils}>
           <NutritionDetails species={species}/>
