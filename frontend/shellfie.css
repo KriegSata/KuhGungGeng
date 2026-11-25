@@ -134,7 +134,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   border: 1px solid #d5c3ff;
   border-radius: 11px;
   color: #fff;
-  background: linear-gradient(111deg, #261349 45%, #4b2588);
+  background: #3b1764;
   box-shadow: 0 4px 14px #1c103866;
   font-size: 13px;
   font-weight: 750;
@@ -147,22 +147,22 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   display: grid;
   place-items: center;
   border-radius: 7px;
-  background: #d5ff9f;
-  color: #271448;
+  background: #ede9fe;
+  color: #5b21b6;
 }
 .toxicity-badge-bubble {
   flex: none;
   width: 10px;
   height: 10px;
   margin-left: 1px;
-  border: 1px solid #d9ffa9;
+  border: 1px solid #ddd6fe;
   border-radius: 50%;
-  background: radial-gradient(circle at 31% 29%, #f3ffdf, #bdf48655 35%, #77aa3780 74%);
-  box-shadow: -4px 6px 0 -3px #d1ffa1, 6px -6px 0 -3px #f5dfff;
+  background: #c4b5fd;
+  box-shadow: -4px 6px 0 -3px #ddd6fe, 6px -6px 0 -3px #ede9fe;
 }
-.atlas-card-photo .toxicity-badge[data-risk="poisoning"] { border-color: #ffd287; background: linear-gradient(111deg, #54290d 45%, #8a4516); box-shadow: 0 4px 14px #46230d66; }
-.toxicity-badge[data-risk="poisoning"] .toxicity-badge-icon { color: #572b10; background: #ffe09b; }
-.toxicity-badge[data-risk="poisoning"] .toxicity-badge-bubble { border-color: #ffde9d; background: radial-gradient(circle at 31% 29%, #fff0ca, #ffc56b55 35%, #dc8c3980 74%); box-shadow: -4px 6px 0 -3px #ffe6b8, 6px -6px 0 -3px #ffd287; }
+.atlas-card-photo .toxicity-badge[data-risk="poisoning"] { border-color: #fecaca; background: #b91c1c; box-shadow: 0 4px 14px #7f1d1d66; }
+.toxicity-badge[data-risk="poisoning"] .toxicity-badge-icon { color: #991b1b; background: #fee2e2; }
+.toxicity-badge[data-risk="poisoning"] .toxicity-badge-bubble { border-color: #fecaca; background: #fca5a5; box-shadow: -4px 6px 0 -3px #fecaca, 6px -6px 0 -3px #fee2e2; }
 @media (prefers-reduced-motion: no-preference) {
   .atlas-card > a:is(:hover, :focus-visible) .toxicity-badge-bubble { animation: toxicity-bubble-bob .62s ease-out both; }
   @keyframes toxicity-bubble-bob {
