@@ -1,6 +1,6 @@
 import {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
 import type {CSSProperties, ReactNode} from 'react';
-import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, Compass, Crop, Focus, Globe2, History, ImageOff, ImagePlus, Info, LayoutGrid, Lightbulb, Link2, LoaderCircle, MapPin, Maximize, MessageSquare, Mountain, Ruler, Search, Shell, CircleAlert, ShieldCheck, Sun, Trash2, Trees, Utensils, Waves, X} from 'lucide-react';
+import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, Compass, Crop, Focus, Globe2, History, ImageOff, ImagePlus, Info, LayoutGrid, Lightbulb, Link2, LoaderCircle, MapPin, Maximize, MessageSquare, Mountain, Search, Shell, CircleAlert, ShieldCheck, Sun, Trash2, Trees, Utensils, Waves, X} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import {animate} from 'animejs/animation';
 import {api, ApiError, startSession, validateFile} from './api';
@@ -651,12 +651,6 @@ function SpeciesDetail({species, back}: {
     <CircleAlert size={20} aria-hidden="true"/>{species.safety_warning}
   </p>;
 
-  const overviewFacts = [
-    {label: 'Habitat', value: species.habitat, Icon: MapPin},
-    {label: 'Range', value: species.distribution, Icon: Globe2},
-    {label: 'Reported size', value: species.size_range, Icon: Ruler},
-  ].filter(({value}) => value);
-
   const overview = <div className="specimen-spread">
     {(toxic || poisoningRisk) && <button className="specimen-toxic" type="button" data-risk={poisoningRisk ? 'poisoning' : undefined}
       aria-label="View safety sources" aria-describedby="species-toxic-title species-toxic-description"
@@ -672,14 +666,20 @@ function SpeciesDetail({species, back}: {
     </button>}
     <div className="specimen-overview-photo specimen-reveal"><SpeciesPhoto species={species} large eager/></div>
     <section className="specimen-summary specimen-reveal" aria-labelledby="species-overview-heading">
-      <h2 id="species-overview-heading">At a glance</h2>
+      <h2 id="species-overview-heading">Species notes</h2>
       {species.description && <p className="shell-lead">{species.description}</p>}
-      {!!overviewFacts.length && <dl className="specimen-overview-facts">
-        {overviewFacts.map(({label, value, Icon}) => <div key={label}>
-          <dt><Icon size={19} aria-hidden="true"/> {label}</dt>
-          <dd>{value}</dd>
-        </div>)}
-      </dl>}
+      <dl>{([
+      ['Cebuano (Bisaya)', cebuanoNames.length ? <span lang="ceb">{cebuanoNames.join(', ')}</span> : 'No verified Cebuano name'],
+      ['Visayan names (regional)', visayanNames.join(', ')], ['Other Philippine names', otherNames.join(', ')],
+      ['Habitat', species.habitat], ['Distribution', species.distribution], ['Reported size', species.size_range],
+      ['Behavior and ecology', species.ecology_notes],
+      ['Coloration', species.coloration], ['Food use', species.edibility === 'reported_food_use' ? 'Reported food use' :
+        species.edibility === 'not_recommended' ? 'Do not eat' : 'Unverified'],
+      ['Venom status', words(species.venom_status || 'unknown')],
+      ['Conservation', words(species.conservation_status || 'not_reviewed')],
+      ['Local restrictions', species.regulatory_notes], ['Uses', species.common_uses],
+      ['Toxicity', toxic ? 'Known toxic species' : species.toxicity === 'diet_related_risk_reported' ? 'Poisoning risk reported' : 'Unverified'],
+    ] as const).filter(([,value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
       {sharedNameNote}
     </section>
     {warning}
@@ -690,15 +690,7 @@ function SpeciesDetail({species, back}: {
       {species.life_stage_notes && <p>{species.life_stage_notes}</p>}
       {!!species.lookalikes?.length && <><h3>Similar species</h3><p>{species.lookalikes.join(', ')}</p></>}
     </div>
-    <div className="specimen-reveal"><h2>Species notes</h2><dl>{([
-      ['Cebuano (Bisaya)', cebuanoNames.length ? <span lang="ceb">{cebuanoNames.join(', ')}</span> : 'No verified Cebuano name'],
-      ['Visayan names (regional)', visayanNames.join(', ')], ['Other Philippine names', otherNames.join(', ')],
-      ['Habitat', species.habitat], ['Distribution', species.distribution], ['Reported size', species.size_range],
-      ['Coloration', species.coloration], ['Food use', species.edibility === 'reported_food_use' ? 'Reported food use' :
-        species.edibility === 'not_recommended' ? 'Do not eat' : 'Unverified'],
-      ['Toxicity', toxic ? 'Known toxic species' : species.toxicity === 'diet_related_risk_reported' ? 'Poisoning risk reported' : 'Unverified'],
-    ] as const).filter(([,value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-    </div>
+
   </section>;
 
   return <article className="shell-page specimen-page">
@@ -726,7 +718,7 @@ function SpeciesSources({species}: {species: Species}) {
   const informationSources = species.sources.filter(source => !nutritionIds.has(source.id));
 
   return <section className="sources-section">
-    <h2>Sources and review</h2>
+    <h2>Sources</h2>
     <div className="species-source-grid">
       <div><h3>Crab information</h3>
         <SpeciesSourceLinks sources={informationSources} empty="Reference links are pending."/>

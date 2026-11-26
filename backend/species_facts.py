@@ -231,6 +231,25 @@ FACTS = {
 }
 
 
+# Additional summaries checked against the linked institutional accounts.
+ECOLOGY = {
+    'atergatis-floridus': (
+        'Mainly active at night, sheltering in reef crevices and coral rubble. '
+        'Development includes several planktonic larval stages.', FLORAL),
+    'hemigrapsus-sanguineus': (
+        'Shelters under rocks, shells, debris and artificial structures. '
+        'Feeds on other crabs and shellfish, including young mussels and oysters.', SHORE),
+    'cardisoma-carnifex': (
+        'Lives on land in deep coastal burrows. Larvae develop at sea before returning to land.', _fao(112)),
+    'ranina-ranina': (
+        'Occupies open sandy bottoms from tidal areas to offshore waters deeper than 100 m. '
+        'Harvested using bottom nets, trawls, dredges and baited tangle nets.', _fao(53)),
+}
+for _identity, (_note, _reference) in ECOLOGY.items():
+    FACTS[_identity]['ecology_notes'] = _note
+    FACTS[_identity]['claim_sources']['ecology_notes'] = [_reference['id']]
+
+
 def enrich(document):
     """Apply sourced reference fields to provisional and legacy records."""
     identity = document['id']
@@ -253,7 +272,7 @@ def enrich(document):
                          for sample in [nutrition, *nutrition['additional_samples']]} if nutrition else {}
     claim_sources['nutrition'] = list(nutrition_sources)
     updated = {**document, **facts, 'nutrition': nutrition, 'claim_sources': claim_sources,
-               'reference_revision': 'species-facts-2026-11-25'}
+               'reference_revision': 'species-facts-2026-11-26'}
     if identity == 'ocypode-ceratophthalma':
         updated['scientific_name'] = 'Ocypode ceratophthalmus'
         updated['synonyms'] = list(dict.fromkeys([*document.get('synonyms', []), 'Ocypode ceratophthalma']))

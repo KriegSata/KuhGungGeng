@@ -17,7 +17,7 @@ export type Species = {
   edibility:string; toxicity:string; venom_status:string; safety_warning:string;
   conservation_status:string; regulatory_notes:string; common_uses:string;
   identification_status:string; last_reviewed:string|null; sources:Source[];
-  description?:string; nutrition?:Nutrition|null;
+  ecology_notes?:string; description?:string; nutrition?:Nutrition|null;
   synonyms?:string[]; nutrition_evidence_note?:string;
   claim_sources?:Record<string, string[]>;
   shared_local_name?:{name:string; species_id:string; species_name:string; toxic?:boolean};

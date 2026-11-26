@@ -151,10 +151,10 @@ describe('Shellfie classroom demo', () => {
   it('shows all species information together without tabs', async () => {
     history.replaceState(null, '', '/#/field-guide/portunus-pelagicus');
     render(<App/>);
-    expect(await screen.findByRole('heading', {name: 'At a glance'})).toBeVisible();
+    expect(await screen.findByRole('heading', {name: 'Species notes'})).toBeVisible();
     expect(screen.getByRole('heading', {name: 'What to look for'})).toBeVisible();
     expect(screen.getByRole('heading', {name: 'Nutrition'})).toBeVisible();
-    expect(screen.getByRole('heading', {name: 'Sources and review'})).toBeVisible();
+    expect(screen.getByRole('heading', {name: 'Sources'})).toBeVisible();
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
   });
 

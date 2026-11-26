@@ -427,10 +427,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   background: linear-gradient(135deg, var(--soft-blue), var(--plate));
   overflow: hidden;
 }
-.specimen-overview-photo .specimen-photo-mat { padding: var(--mat-inset); }
+.specimen-overview-photo .specimen-photo-mat { padding: 0; aspect-ratio: 3 / 2; }
 .specimen-spread img { display: block; width: 100%; height: auto; object-fit: contain; padding: 0; border-radius: 12px 23px 12px 12px; }
 .specimen-spread .reference-photo img {
-  max-height: min(54vh, 412px);
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 0;
 }
 .shell-page .reference-photo.large { background: transparent; overflow: visible; }
 .shell-page .reference-photo figcaption { padding: 8px 0 0; background: transparent; border: 0; }
@@ -941,3 +945,22 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .specimen-toxic[data-risk="poisoning"] .specimen-toxic-icon { border-color: #fecaca; background: #fee2e2; color: #991b1b; }
 .specimen-toxic[data-risk="poisoning"] .specimen-toxic-action { border-color: #fecaca; background: #991b1b; }
 .specimen-toxic-reminder[data-risk="poisoning"] { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+
+/* Compact single-page species reference. */
+.specimen-content { gap: 22px; }
+.specimen-heading { margin: 12px 0 16px; }
+.specimen-spread { align-items: start; gap: 16px 24px; }
+.specimen-summary .shell-lead { margin: 8px 0 12px; font-size: 17px; line-height: 1.45; }
+.specimen-summary dl { margin: 0; }
+.specimen-summary dl > div { display: grid; grid-template-columns: minmax(110px, .55fr) 1fr; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.specimen-summary dt { font-weight: 650; }
+.specimen-summary dd { margin: 0; color: var(--muted); line-height: 1.4; }
+.specimen-notes { display: block; margin: 0; }
+.specimen-page .specimen-content h2 { font-size: clamp(25px, 2.8vw, 34px); }
+.specimen-page .nutrition-section { margin: 0; padding: 16px; }
+.specimen-page .sources-section { margin: 0; }
+@media (max-width: 760px) {
+  .specimen-spread { grid-template-columns: 1fr; }
+  .specimen-summary dl > div { grid-template-columns: minmax(100px, .45fr) 1fr; }
+  .specimen-notes { margin: 0; }
+}
