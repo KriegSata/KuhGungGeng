@@ -107,24 +107,19 @@ describe('Shellfie classroom demo', () => {
     expect(restoredSearch).toHaveFocus();
   });
 
-  it('shows the full toxic warning in Overview and keeps a reminder in Sources', async () => {
+  it('shows the toxic warning and safety sources on the same page', async () => {
     const warning = {id: 'bfar', title: 'BFAR poisonous crab advisory', url: 'https://pia.gov.ph/news/beware-of-deadly-crabs-bfar/'};
     const devil = {...blue, id: 'zosimus-aeneus', english_name: 'Devil crab', scientific_name: 'Zosimus aeneus',
       edibility: 'not_recommended', toxicity: 'toxic', sources: [warning]};
     mockApi({catalog: [devil]});
     history.replaceState(null, '', '/#/field-guide/zosimus-aeneus');
     render(<App/>);
-    const overview = await screen.findByRole('tabpanel', {name: 'Overview'});
-    const safetySources = within(overview).getByRole('button', {name: 'View safety sources'});
+    const safetySources = await screen.findByRole('button', {name: 'View safety sources'});
     expect(safetySources).toHaveAccessibleDescription('Toxic species Do not eat this crab, even if cooked.');
-    expect(within(overview).getByText('Do not eat this crab, even if cooked.')).toBeVisible();
+    expect(screen.getByText('Do not eat this crab, even if cooked.')).toBeVisible();
     fireEvent.click(safetySources);
-    expect(screen.getByRole('tab', {name: 'Sources', selected: true})).toHaveFocus();
     expect(screen.getByRole('link', {name: warning.title})).toHaveAttribute('href', warning.url);
     expect(screen.getByRole('heading', {name: 'Crab nutrition'})).toBeVisible();
-    const sources = screen.getByRole('tabpanel', {name: 'Sources'});
-    expect(within(sources).getByText('Do not eat this crab, even if cooked.').closest('.specimen-toxic-reminder')).toBeVisible();
-    expect(sources.querySelector('.specimen-toxic')).toBeNull();
   });
 
   it('shows reported poisoning on the guide card and links its profile warning to the evidence', async () => {
@@ -153,24 +148,14 @@ describe('Shellfie classroom demo', () => {
     expect(screen.queryByRole('button', {name: 'View safety sources'})).not.toBeInTheDocument();
   });
 
-  it('shows one species panel at a time and supports keyboard navigation between tabs', async () => {
+  it('shows all species information together without tabs', async () => {
     history.replaceState(null, '', '/#/field-guide/portunus-pelagicus');
     render(<App/>);
-    const overview = await screen.findByRole('tab', {name: 'Overview', selected: true});
-    const overviewPanel = screen.getByRole('tabpanel', {name: 'Overview'});
-    expect(within(overviewPanel).getByRole('img', {name: 'Portunus pelagicus reference photograph'})).toBeVisible();
-    expect(within(overviewPanel).queryByRole('button', {name: 'Try this example photo'})).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', {name: 'What to look for'})).not.toBeInTheDocument();
-    overview.focus();
-    fireEvent.keyDown(overview, {key: 'ArrowRight'});
-    const information = screen.getByRole('tab', {name: 'Crab info', selected: true});
-    expect(information).toHaveFocus();
-    expect(within(screen.getByRole('tabpanel', {name: 'Crab info'})).getByRole('heading', {name: 'What to look for'})).toBeVisible();
-    expect(screen.queryByRole('tabpanel', {name: 'Overview'})).not.toBeInTheDocument();
-    fireEvent.keyDown(information, {key: 'End'});
-    expect(screen.getByRole('tab', {name: 'Sources', selected: true})).toHaveFocus();
-    fireEvent.click(screen.getByRole('tab', {name: 'Nutrition'}));
-    expect(within(screen.getByRole('tabpanel', {name: 'Nutrition'})).getByRole('heading', {name: 'Nutrition'})).toBeVisible();
+    expect(await screen.findByRole('heading', {name: 'At a glance'})).toBeVisible();
+    expect(screen.getByRole('heading', {name: 'What to look for'})).toBeVisible();
+    expect(screen.getByRole('heading', {name: 'Nutrition'})).toBeVisible();
+    expect(screen.getByRole('heading', {name: 'Sources and review'})).toBeVisible();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
   });
 
   it('opens a live camera from the hero and stops the stream when it closes', async () => {

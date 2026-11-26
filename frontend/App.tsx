@@ -1,9 +1,8 @@
 import {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
-import type {CSSProperties, KeyboardEvent, ReactNode} from 'react';
-import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, Compass, Crop, Focus, Globe2, History, ImageOff, ImagePlus, Info, LayoutGrid, Lightbulb, Link2, LoaderCircle, MapPin, Maximize, MessageSquare, Mountain, NotebookText, Ruler, Search, Shell, CircleAlert, ShieldCheck, Sun, Trash2, Trees, Utensils, Waves, X} from 'lucide-react';
+import type {CSSProperties, ReactNode} from 'react';
+import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, Compass, Crop, Focus, Globe2, History, ImageOff, ImagePlus, Info, LayoutGrid, Lightbulb, Link2, LoaderCircle, MapPin, Maximize, MessageSquare, Mountain, Ruler, Search, Shell, CircleAlert, ShieldCheck, Sun, Trash2, Trees, Utensils, Waves, X} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import {animate} from 'animejs/animation';
-import {stagger} from 'animejs/utils';
 import {api, ApiError, startSession, validateFile} from './api';
 import type {Prediction, Source, Species} from './types';
 import SpeciesPhoto, {PhotoCredit, referencePhoto} from './SpeciesPhoto';
@@ -632,23 +631,9 @@ function PhotoTips({embedded = false}: {embedded?: boolean}) {
   </article>;
 }
 
-const speciesTabs = [
-  {id: 'overview', label: 'Overview', Icon: BookOpen},
-  {id: 'information', label: 'Crab info', Icon: NotebookText},
-  {id: 'nutrition', label: 'Nutrition', Icon: Utensils},
-  {id: 'sources', label: 'Sources', Icon: Link2},
-];
-const speciesSourcesTab = speciesTabs.findIndex(tab => tab.id === 'sources');
-
 function SpeciesDetail({species, back}: {
   species: Species; back: string;
 }) {
-  const [activeTab, setActiveTab] = useState(0);
-  const previousTab = useRef(0);
-  const tabButtons = useRef<(HTMLButtonElement | null)[]>([]);
-  const tabDock = useRef<HTMLDivElement>(null);
-  const stage = useRef<HTMLDivElement>(null);
-  const activePanel = useRef<HTMLDivElement>(null);
   const toxic = species.toxicity === 'toxic';
   const poisoningRisk = species.toxicity === 'diet_related_risk_reported';
   const warningTitle = toxic ? 'Toxic species' : 'Poisoning risk reported';
@@ -666,59 +651,6 @@ function SpeciesDetail({species, back}: {
     <CircleAlert size={20} aria-hidden="true"/>{species.safety_warning}
   </p>;
 
-  useLayoutEffect(() => {
-    const direction = Math.sign(activeTab - previousTab.current);
-    previousTab.current = activeTab;
-    const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    const panel = activePanel.current;
-    if (!direction || !motion || motion.matches || !panel) return;
-
-    const enter = animate(panel, {opacity: [.82, 1], x: [direction * 8, 0], duration: 220, ease: 'out(3)'});
-    const details = panel.querySelectorAll('.specimen-reveal, .nutrition-card, .species-source-grid > div');
-    const reveal = details.length ? animate(details, {
-      opacity: [.55, 1], y: [12, 0], delay: stagger(45, {start: 65}), duration: 310, ease: 'out(3)',
-    }) : null;
-    function stop() {
-      enter.revert();
-      reveal?.revert();
-    }
-    function updateMotion() {
-      if (motion?.matches) stop();
-    }
-    motion.addEventListener('change', updateMotion);
-    return () => {
-      motion.removeEventListener('change', updateMotion);
-      stop();
-    };
-  }, [activeTab]);
-
-  function selectTab(index: number) {
-    if (index === activeTab) return;
-    if (tabDock.current && stage.current) {
-      const dockBottom = tabDock.current.getBoundingClientRect().bottom;
-      const stageTop = stage.current.getBoundingClientRect().top;
-      if (stageTop < dockBottom) {
-        window.scrollBy({top: stageTop - dockBottom - 8, behavior: 'instant'});
-      }
-    }
-    setActiveTab(index);
-    tabButtons.current[index]?.focus({preventScroll: true});
-  }
-
-  function handleTabKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    const last = speciesTabs.length - 1;
-    let next: number;
-    switch (event.key) {
-      case 'ArrowLeft': next = index === 0 ? last : index - 1; break;
-      case 'ArrowRight': next = index === last ? 0 : index + 1; break;
-      case 'Home': next = 0; break;
-      case 'End': next = last; break;
-      default: return;
-    }
-    event.preventDefault();
-    selectTab(next);
-  }
-
   const overviewFacts = [
     {label: 'Habitat', value: species.habitat, Icon: MapPin},
     {label: 'Range', value: species.distribution, Icon: Globe2},
@@ -728,7 +660,7 @@ function SpeciesDetail({species, back}: {
   const overview = <div className="specimen-spread">
     {(toxic || poisoningRisk) && <button className="specimen-toxic" type="button" data-risk={poisoningRisk ? 'poisoning' : undefined}
       aria-label="View safety sources" aria-describedby="species-toxic-title species-toxic-description"
-      onClick={() => selectTab(speciesSourcesTab)}>
+      onClick={() => document.getElementById('species-sources')?.scrollIntoView?.({behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'})}>
       <span className="specimen-toxic-icon"><CircleAlert size={26} aria-hidden="true"/></span>
       <span className="specimen-toxic-copy">
         <strong id="species-toxic-title">{warningTitle}</strong>
@@ -766,11 +698,8 @@ function SpeciesDetail({species, back}: {
         species.edibility === 'not_recommended' ? 'Do not eat' : 'Unverified'],
       ['Toxicity', toxic ? 'Known toxic species' : species.toxicity === 'diet_related_risk_reported' ? 'Poisoning risk reported' : 'Unverified'],
     ] as const).filter(([,value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-      {sharedNameNote}
     </div>
-    {warning}
   </section>;
-  const panels = [overview, information, <NutritionDetails species={species} standalone/>, <SpeciesSources species={species}/>];
 
   return <article className="shell-page specimen-page">
     <a className="back-link" href={back}><ChevronLeft size={18}/>{back === guide ? 'Back to the field guide' : 'Back to comparison'}</a>
@@ -778,32 +707,11 @@ function SpeciesDetail({species, back}: {
       <h1>{species.english_name}</h1>
       <p className="specimen-latin">{species.scientific_name}</p>
     </header>
-    <div className="specimen-tab-dock" ref={tabDock}>
-      <div className="specimen-tabs" role="tablist" aria-label="Species details" style={{
-        '--tab-index': activeTab, '--tab-column': activeTab % 2, '--tab-row': Math.floor(activeTab / 2),
-      } as CSSProperties}>
-        <span className="specimen-tab-highlight" aria-hidden="true"/>
-        {speciesTabs.map(({id, label, Icon}, index) => <button
-          key={id} type="button" role="tab" id={`species-tab-${id}`} aria-controls={`species-panel-${id}`}
-          aria-selected={activeTab === index} tabIndex={activeTab === index ? 0 : -1}
-          ref={button => { tabButtons.current[index] = button; }}
-          onClick={() => selectTab(index)} onKeyDown={event => handleTabKey(event, index)}>
-          <Icon size={19} aria-hidden="true"/>{label}
-        </button>)}
-      </div>
-    </div>
-    <div className="specimen-stage" ref={stage}>
-      {speciesTabs.map(({id}, index) => <div key={id} role="tabpanel" id={`species-panel-${id}`}
-        aria-labelledby={`species-tab-${id}`} tabIndex={0} hidden={activeTab !== index}
-        className="specimen-panel" ref={activeTab === index ? activePanel : undefined}>
-        {activeTab === index && <>
-          {(toxic || poisoningRisk) && id !== 'overview' && id !== 'nutrition' && <p className="specimen-toxic-reminder" data-risk={poisoningRisk ? 'poisoning' : undefined}>
-            <CircleAlert size={17} aria-hidden="true"/>
-            <span><strong>{warningTitle}</strong> · <span>{warningText}</span></span>
-          </p>}
-          {panels[index]}
-        </>}
-      </div>)}
+    <div className="specimen-content">
+      {overview}
+      {information}
+      <section aria-label="Nutrition"><NutritionDetails species={species} standalone/></section>
+      <div id="species-sources"><SpeciesSources species={species}/></div>
     </div>
   </article>;
 }
@@ -825,11 +733,10 @@ function SpeciesSources({species}: {species: Species}) {
       </div>
       <div><h3>Crab nutrition</h3>
         <SpeciesSourceLinks sources={nutritionSources} empty={hasPoisoningWarning
-          ? 'See the food-safety warning in the Nutrition tab.'
+          ? 'See the food-safety warning in the Nutrition section.'
           : 'No verified species-specific nutrition source is listed.'}/>
       </div>
     </div>
-    <p className="sources-review">{species.last_reviewed ? 'Last expert review ' + species.last_reviewed : 'Expert review pending'}</p>
   </section>;
 }
 

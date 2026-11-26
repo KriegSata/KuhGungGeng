@@ -22,6 +22,11 @@ body { min-width: 280px; }
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline-color: var(--blue); }
 .shell-main { flex: 1 0 auto; width: min(100% - 72px, 1344px); max-width: none; padding: 0; margin: 36px auto 0; }
 .shell-main:focus { outline: none; }
+.shell-main:has(> .specimen-page) { margin-top: 12px; }
+.shell-page.specimen-page { padding-top: 0; }
+.specimen-content { display: grid; gap: clamp(28px, 4vw, 48px); }
+.specimen-content > * { min-width: 0; }
+#species-sources { scroll-margin-top: 100px; }
 .shell-header { border-bottom: 1px solid var(--line); background: var(--surface); }
 .shell-header-inner {
   width: min(100% - 72px, 1344px);
@@ -197,7 +202,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .shell-page .secondary:hover:not(:disabled) { background: var(--soft-blue); }
 .specimen-heading { margin: clamp(18px, 3vw, 29px) 0 20px; }
 .specimen-heading h1 { max-width: none; font-size: clamp(35px, 5.3vw, 69px); line-height: 1.02; }
-.specimen-heading .specimen-latin { margin: 8px 0 0; font: italic clamp(19px, 2.6vw, 29px) Georgia, serif; color: var(--muted); }
+.specimen-heading .specimen-latin { margin: 8px 0 0; padding-left: .18em; font: italic clamp(19px, 2.6vw, 29px)/1.4 Georgia, serif; color: var(--muted); }
 .specimen-page {
   --tab-pad: 7px;
   --tab-gap: 6px;
@@ -926,7 +931,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* Optical alignment for scientific names across cards, profiles and results. */
 .atlas-feature-caption > a i,
 .atlas-card-title i,
-.specimen-heading .specimen-latin,
 .observation-facts-latin,
 .match-species > i,
 .observation-card i {
