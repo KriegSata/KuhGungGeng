@@ -465,6 +465,28 @@ function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, o
   const uploadButton = useRef<HTMLButtonElement>(null);
   const cameraButton = useRef<HTMLButtonElement>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const tipsDialog = useRef<HTMLDialogElement>(null);
+  const pendingPhotoAction = useRef<(() => void) | null>(null);
+  const [skipTips, setSkipTips] = useState(false);
+  const tipsHeadingId = useId();
+
+  function withPhotoTips(action: () => void) {
+    try {
+      if (localStorage.getItem('shellfie:skip-photo-tips') === 'true') { action(); return; }
+    } catch { /* Photo selection still works when browser storage is unavailable. */ }
+    pendingPhotoAction.current = action;
+    tipsDialog.current?.showModal();
+  }
+
+  function continuePhotoAction() {
+    if (skipTips) {
+      try { localStorage.setItem('shellfie:skip-photo-tips', 'true'); } catch { /* Keep the current flow available. */ }
+    }
+    tipsDialog.current?.close();
+    const action = pendingPhotoAction.current;
+    pendingPhotoAction.current = null;
+    action?.();
+  }
   const stages = {preparing: 'Preparing photo…', uploading: 'Uploading photo…', analyzing: 'Comparing species…'};
 
   useLayoutEffect(() => {
@@ -481,7 +503,8 @@ function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, o
   return <div className={retake ? 'result-retake' : 'hero-capture'} role="group" aria-label={retake ? 'Retake a crab photo' : 'Identify a crab photo'}
     onDragOver={event => event.preventDefault()} onDrop={event => {
       event.preventDefault();
-      if (!stage && event.dataTransfer.files[0]) onFile(event.dataTransfer.files[0]);
+      const file = event.dataTransfer.files[0];
+      if (!stage && file) withPhotoTips(() => onFile(file));
     }}>
     <input ref={library} type="file" accept="image/jpeg,image/png,image/webp" hidden
       aria-label="Choose crab photograph" onChange={event => select(event.currentTarget)}/>
@@ -496,16 +519,33 @@ function PhotoPicker({photo, preview, stage, error, model, retryModel, onFile, o
       {photo && <button className="primary capture-submit" disabled={!!stage || model.status !== 'ready'} onClick={onSubmit}>
         Identify crab <ArrowRight size={18}/>
       </button>}
-      <button ref={cameraButton} className={photo ? 'secondary' : 'primary'} disabled={!!stage} onClick={() => setCameraOpen(true)}>
+      <button ref={cameraButton} className={photo ? 'secondary' : 'primary'} disabled={!!stage} onClick={() => withPhotoTips(() => setCameraOpen(true))}>
         <Camera size={19}/>{retake || photo ? 'Retake photo' : 'Take a photo'}
       </button>
-      {(!retake || photo) && <button ref={uploadButton} className="secondary" disabled={!!stage} onClick={() => library.current?.click()}>
+      {(!retake || photo) && <button ref={uploadButton} className="secondary" disabled={!!stage} onClick={() => withPhotoTips(() => library.current?.click())}>
         <ImagePlus size={19}/>{photo ? 'Change photo' : 'Upload photo'}
       </button>}
     </div>
     {stage && <p className="capture-status" role="status"><LoaderCircle className="spin" size={18}/>{stages[stage]}</p>}
     {error && <p className="capture-error" role="alert">{error}</p>}
     {photo && <CaptureModelStatus model={model} retryModel={retryModel}/>}
+    <dialog ref={tipsDialog} className="photo-tips-dialog" aria-labelledby={tipsHeadingId}
+      onClose={() => { pendingPhotoAction.current = null; }}>
+      <h2 id={tipsHeadingId}>Tips for a clear crab photo</h2>
+      <div className="photo-tips-mobile"><ul>
+        <li>Keep the whole crab in frame, including its shell, claws, and legs.</li>
+        <li>Use even light so the shell markings are visible.</li>
+        <li>Tap to focus and hold the camera steady.</li>
+        <li>Photograph from above when possible, keeping a safe distance.</li>
+      </ul></div>
+      <div className="photo-tips-desktop"><PhotoTips embedded/></div>
+      <label className="photo-tips-preference"><input type="checkbox" checked={skipTips}
+        onChange={event => setSkipTips(event.target.checked)}/> Don’t show again</label>
+      <div className="photo-tips-actions">
+        <button type="button" className="secondary" onClick={() => tipsDialog.current?.close()}>Cancel</button>
+        <button type="button" className="primary" onClick={continuePhotoAction}>Continue</button>
+      </div>
+    </dialog>
     {cameraOpen && <CameraCapture onClose={() => setCameraOpen(false)} onPhoto={onFile} onUpload={() => library.current?.click()}/>}
   </div>;
 }
@@ -529,7 +569,7 @@ const photoTipExamples = [
     tip: 'Use even light so the shell markings are visible.'},
 ] as const;
 
-function PhotoTips() {
+function PhotoTips({embedded = false}: {embedded?: boolean}) {
   const exampleId = 'ocypode-ceratophthalma';
   const example = referencePhoto(exampleId);
   const [issue, setIssue] = useState<(typeof photoTipExamples)[number]>(photoTipExamples[0]);
@@ -538,10 +578,10 @@ function PhotoTips() {
   return <article className="shell-page photo-tips">
     <header className="tips-intro">
       <div>
-        <h1>Photo tips</h1>
+        {!embedded && <h1>Photo tips</h1>}
         <p>See what a clear, useful crab photo looks like.</p>
       </div>
-      <a className="primary" href={guide}><Camera size={18} aria-hidden="true"/> Use the photo picker <ArrowRight size={16} aria-hidden="true"/></a>
+      {!embedded && <a className="primary" href={guide}><Camera size={18} aria-hidden="true"/> Use the photo picker <ArrowRight size={16} aria-hidden="true"/></a>}
     </header>
     <section aria-label="Good and poor crab photo examples">
       <div className="tips-comparison">
@@ -555,7 +595,7 @@ function PhotoTips() {
         <figure className="tips-photo tips-photo-retake" data-issue={issue.id}>
           <div className="tips-photo-frame">
             <img src={example.src} width="960" height="720" alt={issue.alt}/>
-            <span className="tips-verdict"><X size={16} aria-hidden="true"/> Retake</span>
+            <span className="tips-verdict"><X size={16} aria-hidden="true"/> Bad photo</span>
           </div>
           <figcaption>
             <div className="tips-issue-options" role="group" aria-label="Choose a photo issue">
@@ -568,7 +608,7 @@ function PhotoTips() {
           </figcaption>
         </figure>
       </div>
-      <p className="tips-credit"><PhotoCredit species={{id: exampleId}}/></p>
+      {!embedded && <p className="tips-credit"><PhotoCredit species={{id: exampleId}}/></p>}
     </section>
     <div className="tips-notes" ref={notes}>
       <section className="tips-checklist" aria-labelledby="photo-checklist">

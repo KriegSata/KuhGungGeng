@@ -540,6 +540,27 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .tips-result section + section { padding-top: 18px; border-top: 1px solid var(--line); }
 .tips-result h2 { font-size: clamp(22px, 2.5vw, 30px); }
 
+.photo-tips-dialog { width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow: auto; padding: 28px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); color: var(--ink); }
+.photo-tips-dialog::backdrop { background: #121d3bbf; }
+.photo-tips-dialog h2 { margin: 0 0 18px; font-size: 25px; line-height: 1.2; }
+.photo-tips-mobile ul { padding-left: 22px; margin: 0 0 22px; line-height: 1.6; }
+.photo-tips-mobile li + li { margin-top: 8px; }
+.photo-tips-desktop { display: none; }
+@media (min-width: 761px) {
+  .photo-tips-dialog { width: min(1040px, calc(100% - 64px)); padding: 32px; }
+  .photo-tips-mobile { display: none; }
+  .photo-tips-desktop { display: block; margin-bottom: 24px; }
+  .photo-tips-dialog .shell-page { padding: 0; margin: 0; max-width: none; }
+  .photo-tips-dialog .tips-intro p { margin: 0; }
+  .photo-tips-dialog .tips-notes { margin-top: 20px; }
+  .photo-tips-dialog .photo-tips h2 { font-size: 24px; }
+  .hero-capture .photo-tips-dialog p { font-size: 16px; line-height: 1.5; }
+}
+.photo-tips-preference { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.photo-tips-preference input { width: 18px; height: 18px; margin: 0; accent-color: var(--blue); }
+.photo-tips-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.hero-capture .photo-tips-dialog .primary { background: var(--blue); color: white; }
+.hero-capture .photo-tips-dialog .secondary { background: var(--surface); color: var(--ink); border-color: var(--control-line); }
 .hero-capture { width: min(100%, 440px); padding: 0; border: 0; background: transparent; color: white; }
 .hero-capture .capture-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr)); gap: 9px; }
 .hero-capture .capture-buttons button { justify-content: center; min-height: 62px; gap: 10px; padding: 14px 18px; border-radius: 14px; font-size: 18px; font-weight: 700; white-space: nowrap; }
