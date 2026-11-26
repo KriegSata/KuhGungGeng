@@ -1,6 +1,6 @@
 import {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
 import type {CSSProperties, KeyboardEvent, ReactNode} from 'react';
-import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, Compass, Crop, Focus, Globe2, History, ImageOff, ImagePlus, Info, LayoutGrid, Lightbulb, Link2, LoaderCircle, MapPin, Maximize, MessageSquare, Mountain, NotebookText, Ruler, Search, Shell, ShieldAlert, ShieldCheck, Sun, Trash2, Trees, Utensils, Waves, X} from 'lucide-react';
+import {ArrowRight, BookOpen, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, Compass, Crop, Focus, Globe2, History, ImageOff, ImagePlus, Info, LayoutGrid, Lightbulb, Link2, LoaderCircle, MapPin, Maximize, MessageSquare, Mountain, NotebookText, Ruler, Search, Shell, CircleAlert, ShieldCheck, Sun, Trash2, Trees, Utensils, Waves, X} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import {animate} from 'animejs/animation';
 import {stagger} from 'animejs/utils';
@@ -581,7 +581,6 @@ function PhotoTips({embedded = false}: {embedded?: boolean}) {
         {!embedded && <h1>Photo tips</h1>}
         <p>See what a clear, useful crab photo looks like.</p>
       </div>
-      {!embedded && <a className="primary" href={guide}><Camera size={18} aria-hidden="true"/> Use the photo picker <ArrowRight size={16} aria-hidden="true"/></a>}
     </header>
     <section aria-label="Good and poor crab photo examples">
       <div className="tips-comparison">
@@ -664,7 +663,7 @@ function SpeciesDetail({species, back}: {
     <p><strong>Shared local name</strong> <i>{sharedName.name}</i> is also used for the {sharedName.toxic && 'toxic '}<a href={speciesLink(sharedName.species_id)}>{sharedName.species_name}</a>. Use more than a local name to identify a crab.</p>
   </div>;
   const warning = species.safety_warning && <p className="result-caution specimen-safety">
-    <ShieldCheck size={20} aria-hidden="true"/>{species.safety_warning}
+    <CircleAlert size={20} aria-hidden="true"/>{species.safety_warning}
   </p>;
 
   useLayoutEffect(() => {
@@ -730,7 +729,7 @@ function SpeciesDetail({species, back}: {
     {(toxic || poisoningRisk) && <button className="specimen-toxic" type="button" data-risk={poisoningRisk ? 'poisoning' : undefined}
       aria-label="View safety sources" aria-describedby="species-toxic-title species-toxic-description"
       onClick={() => selectTab(speciesSourcesTab)}>
-      <span className="specimen-toxic-icon"><ShieldAlert size={26} aria-hidden="true"/></span>
+      <span className="specimen-toxic-icon"><CircleAlert size={26} aria-hidden="true"/></span>
       <span className="specimen-toxic-copy">
         <strong id="species-toxic-title">{warningTitle}</strong>
         <span id="species-toxic-description">{warningText}</span>
@@ -738,7 +737,6 @@ function SpeciesDetail({species, back}: {
       <span className="specimen-toxic-action" aria-hidden="true">
         <span>Safety sources</span><ArrowRight size={17}/>
       </span>
-      <span className="specimen-toxic-bubbles" aria-hidden="true"><i/><i/><i/><i/><i/></span>
     </button>}
     <div className="specimen-overview-photo specimen-reveal"><SpeciesPhoto species={species} large eager/></div>
     <section className="specimen-summary specimen-reveal" aria-labelledby="species-overview-heading">
@@ -800,7 +798,7 @@ function SpeciesDetail({species, back}: {
         className="specimen-panel" ref={activeTab === index ? activePanel : undefined}>
         {activeTab === index && <>
           {(toxic || poisoningRisk) && id !== 'overview' && id !== 'nutrition' && <p className="specimen-toxic-reminder" data-risk={poisoningRisk ? 'poisoning' : undefined}>
-            <ShieldAlert size={17} aria-hidden="true"/>
+            <CircleAlert size={17} aria-hidden="true"/>
             <span><strong>{warningTitle}</strong> · <span>{warningText}</span></span>
           </p>}
           {panels[index]}
@@ -998,7 +996,7 @@ function ObservationPage({id, prediction, species, model, retryModel, candidateI
               }}>
               <span className="match-species"><strong>{name}</strong>
                 {name !== scientificName && <i>{scientificName}</i>}
-                {riskLabel && <span className="match-risk" data-toxicity={toxicity}><ShieldAlert size={14} aria-hidden="true"/>{riskLabel}</span>}
+                {riskLabel && <span className="match-risk" data-toxicity={toxicity}><CircleAlert size={14} aria-hidden="true"/>{riskLabel}</span>}
               </span>
               <span className="match-score"><span className="visually-hidden">Model score </span>{formatMatchScore(item.confidence)}</span>
             </button>;
@@ -1181,7 +1179,6 @@ function ObservationHistory({species, onDelete}: {species: Species[]; onDelete: 
         <h1>My observations</h1>
         <p><ShieldCheck size={17} aria-hidden="true"/> Private to this browser. Results are kept for 30 days and photos for 24 hours.</p>
       </div>
-      {items.length > 0 && <a className="primary" href={guide}><Camera size={18} aria-hidden="true"/> New observation</a>}
     </header>
     {resource.status !== 'ready' ? <LoadState state={resource} label="Loading observations…" retry={retry}/> :
       items.length ? <div className="observations-list">{items.map(item =>
@@ -1223,7 +1220,7 @@ function SpeciesFacts({species, onMore}: {species: Species; onMore: () => void})
     {label: 'Habitat', value: species.habitat, Icon: MapPin},
     {label: 'Range', value: species.distribution, Icon: Globe2},
     {label: 'Food use', value: edibility[species.edibility] ?? words(species.edibility), Icon: Utensils},
-    {label: 'Toxicity', value: toxicity[species.toxicity] ?? words(species.toxicity), Icon: ShieldAlert, caution: hasPoisoningWarning},
+    {label: 'Toxicity', value: toxicity[species.toxicity] ?? words(species.toxicity), Icon: CircleAlert, caution: hasPoisoningWarning},
   ];
 
   return <section className="species-facts" aria-label="Selected species reference">
