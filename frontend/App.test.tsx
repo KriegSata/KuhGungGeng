@@ -1,5 +1,5 @@
 ﻿import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {cleanup, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
+import {act, cleanup, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import App from './App';
 import type {Prediction, Source} from './types';
 
@@ -50,6 +50,39 @@ beforeEach(() => {
 afterEach(() => {cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); fetchMock.mockReset();});
 
 describe('Shellfie classroom demo', () => {
+  it('does not start the featured slideshow on mobile', async () => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({matches: false,
+      addEventListener: vi.fn(), removeEventListener: vi.fn()})));
+    const interval = vi.spyOn(window, 'setInterval');
+    render(<App/>);
+    await screen.findByRole('region', {name: 'Featured crabs'});
+    expect(interval.mock.calls.some(([, delay]) => delay === 20_000)).toBe(false);
+  });
+
+  it('advances featured species after 20 seconds and pauses while hovered', async () => {
+    vi.stubGlobal('matchMedia', vi.fn((query: string) => ({matches: query === '(min-width: 761px)',
+      addEventListener: vi.fn(), removeEventListener: vi.fn()})));
+    render(<App/>);
+    const carousel = await screen.findByRole('region', {name: 'Featured crabs'});
+    vi.useFakeTimers();
+    try {
+      fireEvent.mouseEnter(carousel);
+      await act(async () => { await vi.advanceTimersByTimeAsync(25_000); });
+      expect(within(carousel).getByRole('link', {name: 'Open Blue swimming crab'})).toBeInTheDocument();
+      fireEvent.mouseLeave(carousel);
+      await act(async () => { await vi.advanceTimersByTimeAsync(19_999); });
+      expect(within(carousel).getByRole('link', {name: 'Open Blue swimming crab'})).toBeInTheDocument();
+      await act(async () => { await vi.advanceTimersByTimeAsync(201); });
+      expect(within(carousel).getByRole('link', {name: 'Open Three-spot swimming crab'})).toBeInTheDocument();
+      expect(within(carousel).getByText('Portunus sanguinolentus')).toBeInTheDocument();
+      await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+      expect(carousel).toHaveAttribute('data-phase', 'idle');
+      fireEvent.focus(within(carousel).getByRole('link', {name: 'Open Three-spot swimming crab'}));
+      await act(async () => { await vi.advanceTimersByTimeAsync(25_000); });
+      expect(within(carousel).getByRole('link', {name: 'Open Three-spot swimming crab'})).toBeInTheDocument();
+    } finally { vi.useRealTimers(); }
+  });
+
   it('opens a searchable field guide with a locally hosted featured photo and credits', async () => {
     mockApi({catalog: [blue, threeSpot, {...blue, id: 'atergatis-floridus', english_name: 'Floral egg crab',
       scientific_name: 'Atergatis floridus', toxicity: 'toxic'}]});

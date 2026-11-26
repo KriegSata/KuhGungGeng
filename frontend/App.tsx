@@ -375,16 +375,7 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
         <div className="atlas-feature-caption"><span className="atlas-skeleton atlas-skeleton-line"/>
           <span className="atlas-skeleton atlas-skeleton-line atlas-skeleton-short"/></div>
       </div>}
-      {featured && <div className="atlas-feature">
-        <a href={speciesLink(featured.id)} onClick={onOpen} className="atlas-feature-image" aria-label={'Open ' + featured.english_name}>
-          <SpeciesPhoto species={featured} eager/>
-        </a>
-        <div className="atlas-feature-caption">
-          <a href={speciesLink(featured.id)} onClick={onOpen}><strong>{featured.english_name}</strong>
-            <i>{featured.scientific_name}</i><ArrowRight size={20}/></a>
-          <PhotoCredit species={featured}/>
-        </div>
-      </div>}
+      {featured && <FeaturedCarousel species={species} onOpen={onOpen}/>}
     </section>
     <section className="atlas-index" aria-labelledby="index-heading">
       <div className="atlas-index-controls">
@@ -454,6 +445,72 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
       </div>}
     </section>
   </>;
+}
+
+function FeaturedCarousel({species, onOpen}: {species: Species[]; onOpen: () => void}) {
+  const slides = [...species.filter(item => item.id === 'portunus-pelagicus'),
+    ...species.filter(item => item.id !== 'portunus-pelagicus' && referencePhoto(item.id))];
+  const [index, setIndex] = useState(0);
+  const slideIndex = useRef(index);
+  slideIndex.current = index;
+  const [previous, setPrevious] = useState<number>();
+  const [phase, setPhase] = useState<'idle' | 'fading' | 'sliding'>('idle');
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [desktop, setDesktop] = useState(false);
+  const slideIds = slides.map(item => item.id).join(',');
+  const current = slides[index % slides.length];
+
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const media = window.matchMedia('(min-width: 761px)');
+    const update = () => setDesktop(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    if (!desktop || hovered || focused || slides.length < 2) return;
+    let swap: ReturnType<typeof setTimeout>;
+    let finish: ReturnType<typeof setTimeout>;
+    const interval = setInterval(() => {
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setPhase('fading');
+      swap = setTimeout(() => {
+        setPrevious(slideIndex.current % slides.length);
+        setIndex((slideIndex.current + 1) % slides.length);
+        setPhase('sliding');
+        finish = setTimeout(() => { setPrevious(undefined); setPhase('idle'); }, reduced ? 0 : 650);
+      }, reduced ? 0 : 200);
+    }, 20_000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(swap);
+      clearTimeout(finish);
+      setPrevious(undefined);
+      setPhase('idle');
+    };
+  }, [desktop, hovered, focused, slideIds, slides.length]);
+
+  if (!current) return null;
+  return <section className="atlas-feature atlas-carousel" aria-label="Featured crabs" aria-roledescription="carousel"
+    data-phase={phase} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+    onFocusCapture={() => setFocused(true)} onBlurCapture={event => {
+      if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
+    }}>
+    <a href={speciesLink(current.id)} onClick={onOpen} className="atlas-feature-image" aria-label={'Open ' + current.english_name}>
+      {previous !== undefined && slides[previous] && <div className="atlas-carousel-outgoing" aria-hidden="true">
+        <SpeciesPhoto species={slides[previous]} eager/>
+      </div>}
+      <div className="atlas-carousel-current" key={current.id}><SpeciesPhoto species={current} eager/></div>
+    </a>
+    <div className="atlas-feature-caption">
+      <a href={speciesLink(current.id)} onClick={onOpen}><strong>{current.english_name}</strong>
+        <i>{current.scientific_name}</i><ArrowRight size={20}/></a>
+      <PhotoCredit species={current}/>
+    </div>
+  </section>;
 }
 
 type PhotoPickerProps = ReturnType<typeof usePhotoIdentification> & {model: Resource<Model>; retryModel: () => void};
