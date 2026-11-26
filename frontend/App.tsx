@@ -639,9 +639,9 @@ function SpeciesDetail({species, back}: {
   const warningTitle = toxic ? 'Toxic species' : 'Poisoning risk reported';
   const warningText = toxic ? 'Do not eat this crab, even if cooked.' : 'Toxin detection has been reported. Severity in people is unverified.';
   const localNames = species.names.filter(name => name.scope === 'vernacular');
-  const cebuanoNames = localNames.filter(name => name.language === 'ceb').map(name => name.name);
-  const visayanNames = localNames.filter(name => name.language === 'Visayan').map(name => name.name);
-  const otherNames = localNames.filter(name => name.language !== 'ceb' && name.language !== 'Visayan').map(name => name.name);
+  const languageLabels: Record<string, string> = {ceb: 'Cebuano', Visayan: 'Visayan', hil: 'Hiligaynon', sur: 'Surigaonon', tl: 'Tagalog', fil: 'Filipino'};
+  const localNameSummary = localNames.map(({name, language}) =>
+    languageLabels[language] ? `${name} (${languageLabels[language]})` : name).join(', ');
   const sharedName = species.shared_local_name;
   const sharedNameNote = sharedName && <div className="specimen-name-note">
     <BookOpen size={18} aria-hidden="true"/>
@@ -669,8 +669,7 @@ function SpeciesDetail({species, back}: {
       <h2 id="species-overview-heading">Species notes</h2>
       {species.description && <p className="shell-lead">{species.description}</p>}
       <dl>{([
-      ['Cebuano (Bisaya)', cebuanoNames.length ? <span lang="ceb">{cebuanoNames.join(', ')}</span> : 'No verified Cebuano name'],
-      ['Visayan names (regional)', visayanNames.join(', ')], ['Other Philippine names', otherNames.join(', ')],
+      ['Local names', localNameSummary || 'No documented Philippine local name in the listed sources'],
       ['Habitat', species.habitat], ['Distribution', species.distribution], ['Reported size', species.size_range],
       ['Behavior and ecology', species.ecology_notes],
       ['Coloration', species.coloration], ['Food use', species.edibility === 'reported_food_use' ? 'Reported food use' :
