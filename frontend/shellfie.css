@@ -78,7 +78,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .atlas-intro[data-has-photo="true"] .atlas-mascot { translate: 28px 0; opacity: .72; }
 .atlas-intro h1, .shell-page h1 { font-family: var(--display); font-size: clamp(49px, 5.8vw, 87px); font-weight: 700; line-height: .98; letter-spacing: -.065em; margin: 0; }
 .atlas-intro h1 em { display: block; font-style: normal; color: var(--shell); }
-.atlas-intro > p { font-size: clamp(16px, 1.5vw, 20px); max-width: 28ch; color: #f0f4ff; margin: 18px 0 22px; line-height: 1.5; }
+.atlas-intro > p { font-size: clamp(16px, 1.5vw, 20px); max-width: 28ch; min-height: 4.5em; color: #f0f4ff; margin: 18px 0 22px; line-height: 1.5; }
 .atlas-search { width: min(100%, 360px); display: flex; align-items: center; gap: 11px; padding: 0 15px; min-height: 48px; background: var(--surface); color: var(--ink); border: 1px solid var(--control-line); border-radius: 13px; }
 .atlas-search:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
 .atlas-search svg { flex: none; }
@@ -855,7 +855,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .atlas-opening { grid-template-columns: 1fr; }
   .atlas-intro { min-height: 0; padding: 26px 18px 22px; border-radius: 23px; }
   .atlas-intro h1 { font-size: clamp(37px, 11vw, 69px); }
-  .atlas-intro > p { max-width: 21ch; margin: 12px 0 18px; text-wrap: balance; }
+  .atlas-intro > p { max-width: 21ch; min-height: 6em; margin: 12px 0 18px; text-wrap: balance; }
   .atlas-index-title, .atlas-search { width: 100%; }
   .atlas-index-title { justify-content: space-between; }
   .atlas-habitats { flex-direction: column; align-items: flex-start; gap: 7px; }

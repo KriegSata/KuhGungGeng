@@ -364,7 +364,7 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
   const speciesGrid = useScrollReveal(results.map(item => item.id).join(','), revealCards);
 
   return <>
-    <section className={featured ? 'atlas-opening' : 'atlas-opening atlas-opening-single'}>
+    <section className={catalog.status === 'ready' && !featured ? 'atlas-opening atlas-opening-single' : 'atlas-opening'}>
       <div className="atlas-intro" data-has-photo={hasPhoto}>
         <img ref={mascot} className="atlas-mascot" src="/shellfie-mascot.webp" alt="" width="768" height="768"/>
         <h1>Crabs of the <em>Philippines</em></h1>
