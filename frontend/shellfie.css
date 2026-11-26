@@ -93,7 +93,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .atlas-feature-image .reference-photo img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center; border-radius: 0; }
 .atlas-feature-caption { display: grid; align-items: center; padding: 14px 20px; gap: 5px; }
 .atlas-feature-caption > a { display: inline-grid; align-items: center; justify-self: start; grid-template-columns: 1fr auto; column-gap: 14px; font-size: 16px; color: var(--ink); text-decoration: none; }
-.atlas-feature-caption > a i { grid-row: 2; }
+.atlas-feature-caption > a i { grid-row: 2; padding-left: .08em; }
 .atlas-feature-caption > a svg { grid-column: 2; grid-row: 1 / span 2; }
 .atlas-feature-caption > a:hover strong { text-decoration: underline; }
 .shell-main .photo-credit { color: var(--muted); font-size: 13px; }
@@ -198,7 +198,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .atlas-card > a:hover h3 { text-decoration: underline; text-underline-offset: 4px; }
 .atlas-card-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 15px 7px; }
 .atlas-card-title h3 { font-size: clamp(17px, 2vw, 24px); margin: 0 0 3px; line-height: 1.15; letter-spacing: -.025em; }
-.atlas-card-title i { font-family: Georgia, serif; font-size: 16px; color: var(--muted); }
+.atlas-card-title i { display: block; padding-left: .08em; font-family: Georgia, serif; font-size: 16px; line-height: 1.4; color: var(--muted); }
 .atlas-card-title svg { flex: none; color: var(--blue); }
 .atlas-card-credit { display: flex; align-items: baseline; gap: 8px 14px; flex-wrap: wrap; padding-inline: 15px; }
 

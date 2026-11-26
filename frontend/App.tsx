@@ -437,9 +437,8 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
               <div className="atlas-card-photo">
                 <SpeciesPhoto species={item}/>
                 {badge && <strong className="toxicity-badge" data-risk={risk ? 'poisoning' : undefined} id={`toxicity-${item.id}`}>
-                  <span className="toxicity-badge-icon"><ShieldAlert size={16} aria-hidden="true"/></span>
+                  <span className="toxicity-badge-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true"><path d="M12 4v10"/><path d="M12 19h.01"/></svg></span>
                   <span>{badge}</span>
-                  <span className="toxicity-badge-bubble" aria-hidden="true"/>
                 </strong>}
               </div>
               <div className="atlas-card-title"><div><h3>{item.english_name}</h3><i>{item.scientific_name}</i></div><ArrowRight size={20}/></div>
