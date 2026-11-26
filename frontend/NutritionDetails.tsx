@@ -1,4 +1,4 @@
-import {Activity, ArrowUpRight, ChevronDown, Droplet, Flame, Layers3, ShieldAlert} from 'lucide-react';
+import {Activity, ArrowUpRight, ChevronDown, CircleAlert, Droplet, Flame, Layers3} from 'lucide-react';
 import type {Nutrient, NutritionSample, Source, Species} from './types';
 
 const featuredNutrients = [
@@ -20,7 +20,7 @@ export default function NutritionDetails({species, standalone = false}: {species
     return <section className="nutrition-section" aria-label="Nutrition reference">
       <Title>Nutrition</Title>
       <div className="nutrition-warning" data-toxic={toxic}>
-        <span className="nutrition-warning-icon"><ShieldAlert size={23} aria-hidden="true"/></span>
+        <span className="nutrition-warning-icon"><CircleAlert size={23} aria-hidden="true"/></span>
         <div>
           <Subheading>{toxic ? 'Toxic species' : 'Poisoning risk reported'}</Subheading>
           <p>{toxic ? 'Do not eat this toxic species, even when cooked. BFAR reports that its toxins survive cooking.'

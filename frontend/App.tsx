@@ -648,8 +648,17 @@ function SpeciesDetail({species, back}: {
     <p><strong>Shared local name</strong> <i>{sharedName.name}</i> is also used for the {sharedName.toxic && 'toxic '}<a href={speciesLink(sharedName.species_id)}>{sharedName.species_name}</a>. Use more than a local name to identify a crab.</p>
   </div>;
   const warning = species.safety_warning && <p className="result-caution specimen-safety">
-    <CircleAlert size={20} aria-hidden="true"/>{species.safety_warning}
+    <CircleAlert size={20} aria-hidden="true"/><span>{species.safety_warning}</span>
   </p>;
+
+  const information = <section className="specimen-notes" aria-label="Crab information">
+    <div className="specimen-traits specimen-reveal"><h2>What to look for</h2>
+      {species.diagnostic_traits?.length ? <ul>{species.diagnostic_traits.map(trait => <li key={trait}>{trait}</li>)}</ul> : <p>Trait notes await review.</p>}
+      {species.life_stage_notes && <p>{species.life_stage_notes}</p>}
+      {!!species.lookalikes?.length && <><h3>Similar species</h3><p>{species.lookalikes.join(', ')}</p></>}
+    </div>
+
+  </section>;
 
   const overview = <div className="specimen-spread">
     {(toxic || poisoningRisk) && <button className="specimen-toxic" type="button" data-risk={poisoningRisk ? 'poisoning' : undefined}
@@ -664,7 +673,10 @@ function SpeciesDetail({species, back}: {
         <span>Safety sources</span><ArrowRight size={17}/>
       </span>
     </button>}
-    <div className="specimen-overview-photo specimen-reveal"><SpeciesPhoto species={species} large eager/></div>
+    <div className="specimen-photo-column">
+      <div className="specimen-overview-photo specimen-reveal"><SpeciesPhoto species={species} large eager/></div>
+      {information}
+    </div>
     <section className="specimen-summary specimen-reveal" aria-labelledby="species-overview-heading">
       <h2 id="species-overview-heading">Species notes</h2>
       {species.description && <p className="shell-lead">{species.description}</p>}
@@ -683,15 +695,6 @@ function SpeciesDetail({species, back}: {
     </section>
     {warning}
   </div>;
-  const information = <section className="specimen-notes" aria-label="Crab information">
-    <div className="specimen-traits specimen-reveal"><h2>What to look for</h2>
-      {species.diagnostic_traits?.length ? <ul>{species.diagnostic_traits.map(trait => <li key={trait}>{trait}</li>)}</ul> : <p>Trait notes await review.</p>}
-      {species.life_stage_notes && <p>{species.life_stage_notes}</p>}
-      {!!species.lookalikes?.length && <><h3>Similar species</h3><p>{species.lookalikes.join(', ')}</p></>}
-    </div>
-
-  </section>;
-
   return <article className="shell-page specimen-page">
     <a className="back-link" href={back}><ChevronLeft size={18}/>{back === guide ? 'Back to the field guide' : 'Back to comparison'}</a>
     <header className="specimen-heading">
@@ -700,7 +703,6 @@ function SpeciesDetail({species, back}: {
     </header>
     <div className="specimen-content">
       {overview}
-      {information}
       <section aria-label="Nutrition"><NutritionDetails species={species} standalone/></section>
       <div id="species-sources"><SpeciesSources species={species}/></div>
     </div>
