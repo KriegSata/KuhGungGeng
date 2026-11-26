@@ -138,7 +138,7 @@ function exampleFor(id: string) {
 function resultTitle(prediction: Prediction) {
   if (prediction.reason === 'model_unavailable') return 'Identification unavailable';
   if (prediction.reason === 'poor_image_quality') return 'Photo quality warning';
-  return prediction.status === 'identified' ? 'Possible match' : 'Match uncertain';
+  return (prediction.candidates[0]?.confidence ?? 0) > .8 ? 'Confident match' : 'Unsure match';
 }
 
 function resultMessage(prediction: Prediction, topSuggestion?: string) {

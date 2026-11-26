@@ -50,6 +50,16 @@ beforeEach(() => {
 afterEach(() => {cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); fetchMock.mockReset();});
 
 describe('Shellfie classroom demo', () => {
+  it.each([[.79, 'Unsure match'], [.8, 'Unsure match'], [.81, 'Confident match']])(
+    'labels a top score of %s as %s', async (confidence, title) => {
+      mockApi({prediction: {...result, status: 'identified', reason: null,
+        candidates: [{...result.candidates[0], confidence: Number(confidence)}]}});
+      history.replaceState(null, '', '/#/observations/prediction-id');
+      render(<App/>);
+      expect(await screen.findByRole('heading', {name: String(title)})).toBeVisible();
+    },
+  );
+
   it('does not start the featured slideshow on mobile', async () => {
     vi.stubGlobal('matchMedia', vi.fn(() => ({matches: false,
       addEventListener: vi.fn(), removeEventListener: vi.fn()})));
@@ -230,7 +240,7 @@ describe('Shellfie classroom demo', () => {
     const identify = picker.getByRole('button', {name: 'Identify crab'});
     await waitFor(() => expect(identify).toBeEnabled());
     fireEvent.click(identify);
-    expect(await screen.findByRole('heading', {name: 'Match uncertain'})).toBeInTheDocument();
+    expect(await screen.findByRole('heading', {name: 'Unsure match'})).toBeInTheDocument();
     expect(location.hash).toBe('#/observations/prediction-id');
   });
 
@@ -373,7 +383,7 @@ describe('Shellfie classroom demo', () => {
     expect(fetchMock.mock.calls.filter(([url]) => url === '/api/uploads')).toHaveLength(1);
   });
 
-  it.each([['identified', 'Possible match'], ['insufficient_information', 'Match uncertain']])(
+  it.each([['identified', 'Unsure match'], ['insufficient_information', 'Unsure match']])(
     'shows the selected species facts while preserving result wording for %s',
     async (status, title) => {
       mockApi({prediction: {...result, candidates: [result.candidates[1]], status, reason: status === 'identified' ? null : 'ambiguous_species'}});
@@ -424,7 +434,7 @@ describe('Shellfie classroom demo', () => {
     expect(await tip.findByRole('img', {name: 'Your selected crab photograph'})).toBeVisible();
     expect(location.hash).toBe('#/observations/' + blurry.id);
     fireEvent.click(tip.getByRole('button', {name: 'Identify crab'}));
-    expect(await screen.findByRole('heading', {name: 'Possible match'})).toBeVisible();
+    expect(await screen.findByRole('heading', {name: 'Unsure match'})).toBeVisible();
     expect(location.hash).toBe('#/observations/' + next.id);
     expect(fetchMock).toHaveBeenCalledWith('/api/predictions', expect.objectContaining({
       method: 'POST', body: JSON.stringify({upload_id: next.upload_id, top_k: 3}),
@@ -440,12 +450,12 @@ describe('Shellfie classroom demo', () => {
     history.replaceState(null, '', '/#/observations');
     render(<App/>);
     const unresolved = await screen.findByRole('link', {name: 'Unresolved observation'});
-    expect(within(unresolved).getByText('Match uncertain')).toBeInTheDocument();
+    expect(within(unresolved).getByText('Unsure match')).toBeInTheDocument();
     expect(within(unresolved).getByText('Photo expired')).toBeInTheDocument();
-    expect(unresolved).toHaveAccessibleDescription('Match uncertain Photo expired');
+    expect(unresolved).toHaveAccessibleDescription('Unsure match Photo expired');
     expect(unresolved).not.toHaveTextContent(threeSpot.scientific_name);
     const match = await screen.findByRole('link', {name: blue.english_name});
-    expect(within(match).getByText('Possible match')).toBeInTheDocument();
+    expect(within(match).getByText('Unsure match')).toBeInTheDocument();
     expect(match).toHaveAttribute('href', '#/observations/identified-id');
     fireEvent.click(screen.getByRole('button', {name: 'Delete observation and photo for Unresolved observation'}));
     const dialog = screen.getByRole('dialog', {name: 'Delete this observation?'});
