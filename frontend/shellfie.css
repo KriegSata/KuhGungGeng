@@ -110,6 +110,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .atlas-index-heading h2, .shell-page h2 { margin: 0; font-family: var(--display); font-size: clamp(29px, 3.4vw, 46px); font-weight: 700; line-height: 1.04; letter-spacing: -.055em; }
 .atlas-index-heading output { font-size: 15px; color: var(--muted); }
 .atlas-habitats { position: relative; display: flex; align-items: center; margin: 0; }
+.atlas-habitats > .atlas-habitat-options { width: 210px; }
+.atlas-habitats > .atlas-habitat-options > button { width: 100%; justify-content: flex-start; }
+.atlas-habitats > .atlas-habitat-options > button > svg:last-child { margin-left: auto; }
 .atlas-habitats-label { flex: none; color: var(--muted); font-size: 14px; font-weight: 700; }
 .atlas-habitat-options { display: flex; flex-wrap: wrap; gap: 8px; }
 .atlas-habitat-options > button { min-height: 48px; }
@@ -131,7 +134,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .atlas-skeleton-caption .atlas-skeleton-line { height: clamp(20px, 2.3vw, 28px); }
 .atlas-skeleton-caption .atlas-skeleton-short { height: 18px; }
 .atlas-skeleton-credit { width: 45%; height: 14px; margin-top: 4px; }
-.atlas-skeleton-filter { width: 158px; height: 48px; border-radius: 14px; }
+.atlas-skeleton-filter { width: 210px; height: 48px; border-radius: 14px; }
 .atlas-skeleton-line { width: 78%; height: 18px; }
 .atlas-skeleton-short { width: 52%; height: 14px; }
 @media (prefers-reduced-motion: no-preference) {
