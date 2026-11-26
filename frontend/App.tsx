@@ -371,6 +371,11 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
         <p>{crabPrompt}</p>
         <PhotoPicker {...picker}/>
       </div>
+      {catalog.status === 'loading' && <div className="atlas-feature" aria-hidden="true">
+        <div className="atlas-feature-image atlas-skeleton"/>
+        <div className="atlas-feature-caption"><span className="atlas-skeleton atlas-skeleton-line"/>
+          <span className="atlas-skeleton atlas-skeleton-line atlas-skeleton-short"/></div>
+      </div>}
       {featured && <div className="atlas-feature">
         <a href={speciesLink(featured.id)} onClick={onOpen} className="atlas-feature-image" aria-label={'Open ' + featured.english_name}>
           <SpeciesPhoto species={featured} eager/>
@@ -391,6 +396,9 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
               onChange={event => setSearch(event.target.value)}/>
           </label>
         </div>
+        {catalog.status === 'loading' && <div className="atlas-habitats" aria-hidden="true">
+          <span className="atlas-skeleton atlas-skeleton-filter"/>
+        </div>}
         {catalog.status === 'ready' && <div className="atlas-habitats" role="group" aria-label="Filter by habitat">
           <div className="atlas-habitat-options">
             <button type="button" aria-expanded={habitatsOpen} aria-controls={habitatOptionsId}
@@ -410,7 +418,16 @@ function Atlas({catalog, retryCatalog, picker, search, setSearch, habitat, setHa
           </div>
         </div>}
       </div>
-      {catalog.status !== 'ready' ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/> :
+      {catalog.status === 'loading' ? <div role="status" aria-label="Loading the field guide" aria-busy="true">
+        <span className="visually-hidden">Loading the field guide…</span>
+        <div className="atlas-grid" aria-hidden="true">{Array.from({length: 12}, (_, index) =>
+          <div className="atlas-card" key={index}>
+            <div className="atlas-skeleton atlas-skeleton-photo"/>
+            <div className="atlas-skeleton-caption"><span className="atlas-skeleton atlas-skeleton-line"/>
+              <span className="atlas-skeleton atlas-skeleton-line atlas-skeleton-short"/></div>
+            <div className="atlas-card-credit"><span className="atlas-skeleton atlas-skeleton-credit"/></div>
+          </div>)}</div>
+      </div> : catalog.status !== 'ready' ? <LoadState state={catalog} label="Loading the field guide…" retry={retryCatalog}/> :
         results.length ? <div className="atlas-grid" ref={speciesGrid}>{results.map(item => {
           const risk = item.toxicity === 'diet_related_risk_reported';
           const badge = speciesRiskLabel(item.toxicity);
