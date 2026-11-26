@@ -232,6 +232,49 @@ FACTS = {
 
 
 # Additional summaries checked against the linked institutional accounts.
+CEBU_BLUE = _source('sienes-blue-crab-2014', 'Sienes et al.: Philippine blue swimming crab sampling locations (2014)',
+                    'https://scienggj.org/2014/PSL%202014-vol07-no02-p317-323%20Sienes.pdf')
+CAMOTES_MUD = _source('nast-camotes-mud-crabs-2007', 'NAST: Mud crab assessment in the Camotes Islands, Cebu (2007)',
+                      'https://nast.dost.gov.ph/images/pdf%20files/Publications/NAST%20Transactions/NAST%202007%20Transactions%20Volume%2029%20Issue%20No.%201/NAST%202007%20Transaction%20Vol.%2029%20Issue%20No.%201%28FULL%29.pdf')
+CEBU_DEVIL = _source('cebu-zosimus-1983', 'Japanese Society of Scientific Fisheries: Zosimus specimens from Cebu (1983)',
+                     'https://www.jstage.jst.go.jp/article/suisan1932/49/8/49_8_1273/_pdf')
+VISAYAN_CATCH = _source('nfrdi-western-visayan-crabs-2018', 'NFRDI: Blue swimming crab stock assessment, Western Visayan Sea (2018)',
+                        'https://www.nfrdi.da.gov.ph/tpjf/vol25/Blue%20Swimming%20Crab%20Stock%20Assessment%20in%20the%20Western%20Visayan%20Sea.pdf')
+NEGROS_REEF = _source('negros-toxic-crabs-1986', 'Yasumura et al.: Reef crab specimens from southern Negros (1986)',
+                      'https://academic.oup.com/bbb/article-abstract/50/3/593/5961998')
+
+REGIONAL_DISTRIBUTION = {
+    'portunus-pelagicus': (
+        'Cebu: documented on Bantayan Island.', (CEBU_BLUE,)),
+    'scylla-olivacea': (
+        'Cebu: documented in a Camotes Islands mud-crab survey covering San Francisco, Tudela, Poro and Pilar.', (CAMOTES_MUD,)),
+    'ocypode-ceratophthalma': (
+        'Cebu: historical records from Bantayan Island.', (GHOST_TAWI,)),
+    'cardisoma-carnifex': (
+        'Cebu: historical island-level records; specific municipalities are not identified in the source.', (GHOST_TAWI,)),
+    'zosimus-aeneus': (
+        'Cebu Island: specimens collected in January 1981; the source does not identify a municipality.', (CEBU_DEVIL, NEGROS_REEF)),
+    'atergatis-floridus': (
+        'Cebu: recorded in the regional species account; specific municipalities are not identified.', (FLORAL_RANGE, NEGROS_REEF)),
+    'portunus-sanguinolentus': (
+        'Cebu: no specific occurrence confirmed in the listed sources.', (VISAYAN_CATCH,)),
+    'charybdis-feriata': (
+        'Cebu: no specific occurrence confirmed in the listed sources.', (VISAYAN_CATCH,)),
+    'scylla-serrata': (
+        'Cebu: no specific occurrence confirmed in the listed sources.', (VISAYAN_CATCH,)),
+    'scylla-tranquebarica': (
+        'Cebu: no specific occurrence confirmed in the listed sources.', (GHOST_TAWI,)),
+    'ranina-ranina': (
+        'Cebu: no specific occurrence confirmed in the listed sources.', (_food(72),)),
+    'hemigrapsus-sanguineus': (
+        'Cebu: no specific occurrence confirmed in the listed sources.', (SHORE_RANGE,)),
+}
+for _identity, (_distribution, _references) in REGIONAL_DISTRIBUTION.items():
+    FACTS[_identity]['distribution'] = _distribution
+    FACTS[_identity]['claim_sources']['distribution'] = [source['id'] for source in _references]
+    FACTS[_identity]['sources'].extend(_references)
+
+
 ECOLOGY = {
     'atergatis-floridus': (
         'Mainly active at night, sheltering in reef crevices and coral rubble. '
