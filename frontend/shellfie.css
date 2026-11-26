@@ -541,8 +541,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .hero-capture .photo-tips-dialog .primary { background: var(--blue); color: white; }
 .hero-capture .photo-tips-dialog .secondary { background: var(--surface); color: var(--ink); border-color: var(--control-line); }
 .hero-capture { width: min(100%, 440px); padding: 0; border: 0; background: transparent; color: white; }
-.hero-capture .capture-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr)); gap: 9px; }
-.hero-capture .capture-buttons button { justify-content: center; min-height: 62px; gap: 10px; padding: 14px 18px; border-radius: 14px; font-size: 18px; font-weight: 700; white-space: nowrap; }
+.hero-capture .capture-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(208px, 100%), 1fr)); gap: 9px; }
+.hero-capture .capture-buttons button { display: inline-flex; width: 100%; min-width: 0; align-items: center; justify-content: center; min-height: 62px; gap: 10px; padding: 14px 16px; border-radius: 14px; font-size: 18px; font-weight: 700; line-height: 1.3; white-space: normal; }
 .hero-capture .capture-buttons button svg { flex: none; width: 24px; height: 24px; }
 .hero-capture button:focus-visible { outline-color: var(--shell); }
 .hero-capture .primary { background: var(--shell); border-color: transparent; color: #2d2142; box-shadow: 0 3px 10px #061a6b30; }
